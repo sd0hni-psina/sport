@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS awards;
+DROP TYPE IF EXISTS award_type;

@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS gallery;
+DROP TYPE IF EXISTS gallery_type;
