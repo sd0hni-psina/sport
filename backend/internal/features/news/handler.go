@@ -101,3 +101,12 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 	}
 }
+
+func (h *Handler) AdminList(c *gin.Context) {
+	posts, err := h.service.ListAll(c.Request.Context())
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": posts})
+}

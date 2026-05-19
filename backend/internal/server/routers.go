@@ -74,7 +74,6 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 		v1.GET("/gallery", galleryHandler.List)
 
 		v1.GET("/stats", analyticsHandler.PublicCounters)
-		v1.GET("/stats/full", analyticsHandler.GetStats)
 
 		// требует JWT
 		protected := v1.Group("")
@@ -90,6 +89,8 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			protected.GET("/me/applications", applicationsHandler.MyApplications)
 			protected.POST("/events/:id/apply", applicationsHandler.Apply)
 			protected.DELETE("/applications/:id", applicationsHandler.Cancel)
+
+			protected.GET("/stats/full", analyticsHandler.GetStats)
 		}
 
 		// требует JWT + admin
@@ -100,6 +101,7 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			admin.PUT("/events/:id", eventsHandler.Update)
 			admin.DELETE("/events/:id", eventsHandler.Delete)
 			admin.PATCH("/events/:id/status", eventsHandler.UpdateStatus)
+			admin.GET("/events", eventsHandler.AdminList)
 
 			admin.GET("/applications", applicationsHandler.AdminList)
 			admin.PATCH("/applications/:id/status", applicationsHandler.AdminUpdateStatus)
@@ -111,6 +113,7 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			admin.POST("/news", newsHandler.Create)
 			admin.PUT("/news/:id", newsHandler.Update)
 			admin.DELETE("/news/:id", newsHandler.Delete)
+			admin.GET("/news", newsHandler.AdminList)
 
 			admin.POST("/sections", sectionsHandler.Create)
 			admin.PUT("/sections/:id", sectionsHandler.Update)

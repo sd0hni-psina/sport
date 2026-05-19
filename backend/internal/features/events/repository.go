@@ -101,9 +101,12 @@ func (r *Repository) List(ctx context.Context, f ListEventsFilter) ([]*domain.Ev
 	}
 
 	if f.Age != nil {
-		query += fmt.Sprintf(" AND (min_age IS NULL OR min_age <= $%d) AND (max_age IS NULL OR max_age >= $%d)", argN, argN)
-		args = append(args, *f.Age)
-		argN++
+		query += fmt.Sprintf(
+			" AND (min_age IS NULL OR min_age <= $%d) AND (max_age IS NULL OR max_age >= $%d)",
+			argN, argN+1,
+		)
+		args = append(args, *f.Age, *f.Age)
+		argN += 2
 	}
 
 	query += fmt.Sprintf(" ORDER BY time_start ASC LIMIT $%d OFFSET $%d", argN, argN+1)
@@ -155,12 +158,15 @@ func (r *Repository) Update(ctx context.Context, e *domain.Event) error {
 }
 
 func (r *Repository) UpdateStatus(ctx context.Context, id int64, status domain.EventStatus) error {
-	_, err := r.db.Exec(ctx,
+	tag, err := r.db.Exec(ctx,
 		`UPDATE events SET status = $1, updated_at = $2 WHERE id = $3`,
 		status, time.Now(), id,
 	)
 	if err != nil {
 		return fmt.Errorf("events.repo: update status: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
 	}
 	return nil
 }
@@ -171,4 +177,46 @@ func (r *Repository) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("events.repo: delete: %w", err)
 	}
 	return nil
+}
+
+func (r *Repository) CountActiveApplications(ctx context.Context, eventID int64) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, `
+		SELECT COUNT(*) FROM applications
+		WHERE event_id = $1 AND status IN ('pending', 'confirmed')`,
+		eventID,
+	).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("events.repo: count active applications: %w", err)
+	}
+	return count, nil
+}
+
+func (r *Repository) ListAll(ctx context.Context) ([]*domain.Event, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, name, sport_type, description, location, location_lat, location_lng,
+		       time_start, time_end, instructor_name, instructor_bio,
+		       min_age, max_age, max_participants, prizes, cancel_deadline_hrs,
+		       status, created_at, updated_at
+		FROM events
+		ORDER BY created_at DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("events.repo: list all: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*domain.Event
+	for rows.Next() {
+		e := &domain.Event{}
+		if err := rows.Scan(
+			&e.ID, &e.Name, &e.SportType, &e.Description, &e.Location, &e.LocationLat, &e.LocationLng,
+			&e.TimeStart, &e.TimeEnd, &e.InstructorName, &e.InstructorBio,
+			&e.MinAge, &e.MaxAge, &e.MaxParticipants, &e.Prizes, &e.CancelDeadlineHrs,
+			&e.Status, &e.CreatedAt, &e.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("events.repo: scan: %w", err)
+		}
+		result = append(result, e)
+	}
+	return result, nil
 }

@@ -37,7 +37,10 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*domain.Post, error
 	p := &domain.Post{}
 	err := r.db.QueryRow(ctx, `
 		SELECT id, title, body, cover_image, event_id, published_at, created_at, updated_at
-		FROM posts WHERE id = $1`, id,
+		FROM posts
+		WHERE id = $1
+		AND published_at IS NOT NULL
+		AND published_at <= NOW()`, id,
 	).Scan(
 		&p.ID, &p.Title, &p.Body, &p.CoverImage,
 		&p.EventID, &p.PublishedAt, &p.CreatedAt, &p.UpdatedAt,
@@ -97,4 +100,27 @@ func (r *Repository) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("news.repo: delete: %w", err)
 	}
 	return nil
+}
+
+func (r *Repository) ListAll(ctx context.Context) ([]*domain.Post, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, title, body, cover_image, event_id, published_at, created_at, updated_at
+		FROM posts ORDER BY created_at DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("news.repo: list all: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*domain.Post
+	for rows.Next() {
+		p := &domain.Post{}
+		if err := rows.Scan(
+			&p.ID, &p.Title, &p.Body, &p.CoverImage,
+			&p.EventID, &p.PublishedAt, &p.CreatedAt, &p.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("news.repo: scan: %w", err)
+		}
+		result = append(result, p)
+	}
+	return result, nil
 }

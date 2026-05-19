@@ -58,6 +58,14 @@ func mustGetEnv(key string) string {
 	return val
 }
 
+func mustGetEnvSecure(key string, minLen int) string {
+	val := mustGetEnv(key)
+	if len(val) < minLen {
+		log.Fatalf("env variable %q is too short: minimum %d characters required", key, minLen)
+	}
+	return val
+}
+
 func getEnvInt(key string, fallback int) int {
 	val := os.Getenv(key)
 	if val == "" {
@@ -95,8 +103,8 @@ func Load() *Config {
 			DB:       getEnvInt("REDIS_DB", 0),
 		},
 		JWT: JWTConfig{
-			AccessSecret:  mustGetEnv("JWT_ACCESS_SECRET"),
-			RefreshSecret: mustGetEnv("JWT_REFRESH_SECRET"),
+			AccessSecret:  mustGetEnvSecure("JWT_ACCESS_SECRET", 32),
+			RefreshSecret: mustGetEnvSecure("JWT_REFRESH_SECRET", 32),
 			AccessTTL:     getEnvInt("JWT_ACCESS_TTL_MINUTES", 15),
 			RefreshTTL:    getEnvInt("JWT_REFRESH_TTL_DAYS", 30),
 		},

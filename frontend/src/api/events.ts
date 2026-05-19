@@ -7,4 +7,6 @@ export const eventsApi = {
 
   getById: (id: number) =>
     apiClient.get<{ data: Event }>(`/events/${id}`),
+  getByIds: (ids: number[]) =>
+  Promise.all(ids.map(id => apiClient.get<{ data: Event }>(`/events/${id}`).then(r => r.data.data))),
 }

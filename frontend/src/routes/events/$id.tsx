@@ -8,6 +8,7 @@ import { ru } from 'date-fns/locale'
 import { MapPin, Clock, Users, Trophy, User, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
+
 export const Route = createFileRoute('/events/$id')({
   component: EventPage,
 })
@@ -16,7 +17,18 @@ function EventPage() {
   const { id } = Route.useParams()
   const queryClient = useQueryClient()
   const isAuth = authStore.isAuthenticated()
-  const [applied, setApplied] = useState(false)
+  const { data: myApps } = useQuery({
+  queryKey: ['my-applications'],
+  queryFn: () => applicationsApi.myApplications().then(r => r.data),
+  enabled: isAuth,
+})
+
+const existingApplication = myApps?.data?.find(
+  a => a.event_id === Number(id) &&
+    a.status !== 'cancelled_by_user' &&
+    a.status !== 'cancelled_by_admin'
+)
+const applied = !!existingApplication
   const [error, setError] = useState('')
 
   const { data, isLoading } = useQuery({
@@ -27,7 +39,6 @@ function EventPage() {
   const applyMutation = useMutation({
     mutationFn: () => applicationsApi.apply(Number(id), {}),
     onSuccess: () => {
-      setApplied(true)
       queryClient.invalidateQueries({ queryKey: ['my-applications'] })
     },
     onError: (err: any) => {

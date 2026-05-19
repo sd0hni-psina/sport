@@ -10,18 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SectionsRouteImport } from './routes/sections'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile/index'
 import { Route as NewsIndexRouteImport } from './routes/news/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as NewsIdRouteImport } from './routes/news/$id'
 import { Route as EventsIdRouteImport } from './routes/events/$id'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
+import { Route as AdminNewsIndexRouteImport } from './routes/admin/news/index'
+import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
+import { Route as AdminApplicationsIndexRouteImport } from './routes/admin/applications/index'
+import { Route as AdminNewsNewRouteImport } from './routes/admin/news/new'
+import { Route as AdminEventsNewRouteImport } from './routes/admin/events/new'
+import { Route as AdminNewsIdEditRouteImport } from './routes/admin/news/$id.edit'
+import { Route as AdminEventsIdEditRouteImport } from './routes/admin/events/$id.edit'
 
 const SectionsRoute = SectionsRouteImport.update({
   id: '/sections',
   path: '/sections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -44,6 +59,11 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
   path: '/events/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const NewsIdRoute = NewsIdRouteImport.update({
   id: '/news/$id',
   path: '/news/$id',
@@ -64,17 +84,67 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminNewsIndexRoute = AdminNewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventsIndexRoute = AdminEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminApplicationsIndexRoute = AdminApplicationsIndexRouteImport.update({
+  id: '/applications/',
+  path: '/applications/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminNewsNewRoute = AdminNewsNewRouteImport.update({
+  id: '/news/new',
+  path: '/news/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventsNewRoute = AdminEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminNewsIdEditRoute = AdminNewsIdEditRouteImport.update({
+  id: '/news/$id/edit',
+  path: '/news/$id/edit',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventsIdEditRoute = AdminEventsIdEditRouteImport.update({
+  id: '/events/$id/edit',
+  path: '/events/$id/edit',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/sections': typeof SectionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/news/': typeof NewsIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/admin/events/new': typeof AdminEventsNewRoute
+  '/admin/news/new': typeof AdminNewsNewRoute
+  '/admin/applications/': typeof AdminApplicationsIndexRoute
+  '/admin/events/': typeof AdminEventsIndexRoute
+  '/admin/news/': typeof AdminNewsIndexRoute
+  '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/events/$id/edit': typeof AdminEventsIdEditRoute
+  '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,34 +153,63 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/admin': typeof AdminIndexRoute
   '/events': typeof EventsIndexRoute
   '/news': typeof NewsIndexRoute
   '/profile': typeof ProfileIndexRoute
+  '/admin/events/new': typeof AdminEventsNewRoute
+  '/admin/news/new': typeof AdminNewsNewRoute
+  '/admin/applications': typeof AdminApplicationsIndexRoute
+  '/admin/events': typeof AdminEventsIndexRoute
+  '/admin/news': typeof AdminNewsIndexRoute
+  '/admin/users': typeof AdminUsersIndexRoute
+  '/admin/events/$id/edit': typeof AdminEventsIdEditRoute
+  '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/sections': typeof SectionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/news/': typeof NewsIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/admin/events/new': typeof AdminEventsNewRoute
+  '/admin/news/new': typeof AdminNewsNewRoute
+  '/admin/applications/': typeof AdminApplicationsIndexRoute
+  '/admin/events/': typeof AdminEventsIndexRoute
+  '/admin/news/': typeof AdminNewsIndexRoute
+  '/admin/users/': typeof AdminUsersIndexRoute
+  '/admin/events/$id/edit': typeof AdminEventsIdEditRoute
+  '/admin/news/$id/edit': typeof AdminNewsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/sections'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/admin/'
     | '/events/'
     | '/news/'
     | '/profile/'
+    | '/admin/events/new'
+    | '/admin/news/new'
+    | '/admin/applications/'
+    | '/admin/events/'
+    | '/admin/news/'
+    | '/admin/users/'
+    | '/admin/events/$id/edit'
+    | '/admin/news/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -119,24 +218,44 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/admin'
     | '/events'
     | '/news'
     | '/profile'
+    | '/admin/events/new'
+    | '/admin/news/new'
+    | '/admin/applications'
+    | '/admin/events'
+    | '/admin/news'
+    | '/admin/users'
+    | '/admin/events/$id/edit'
+    | '/admin/news/$id/edit'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/sections'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/admin/'
     | '/events/'
     | '/news/'
     | '/profile/'
+    | '/admin/events/new'
+    | '/admin/news/new'
+    | '/admin/applications/'
+    | '/admin/events/'
+    | '/admin/news/'
+    | '/admin/users/'
+    | '/admin/events/$id/edit'
+    | '/admin/news/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   SectionsRoute: typeof SectionsRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
@@ -154,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/sections'
       fullPath: '/sections'
       preLoaderRoute: typeof SectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -184,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/news/$id': {
       id: '/news/$id'
       path: '/news/$id'
@@ -212,11 +345,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users/': {
+      id: '/admin/users/'
+      path: '/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AdminUsersIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/news/': {
+      id: '/admin/news/'
+      path: '/news'
+      fullPath: '/admin/news/'
+      preLoaderRoute: typeof AdminNewsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/events/': {
+      id: '/admin/events/'
+      path: '/events'
+      fullPath: '/admin/events/'
+      preLoaderRoute: typeof AdminEventsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/applications/': {
+      id: '/admin/applications/'
+      path: '/applications'
+      fullPath: '/admin/applications/'
+      preLoaderRoute: typeof AdminApplicationsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/news/new': {
+      id: '/admin/news/new'
+      path: '/news/new'
+      fullPath: '/admin/news/new'
+      preLoaderRoute: typeof AdminNewsNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/events/new': {
+      id: '/admin/events/new'
+      path: '/events/new'
+      fullPath: '/admin/events/new'
+      preLoaderRoute: typeof AdminEventsNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/news/$id/edit': {
+      id: '/admin/news/$id/edit'
+      path: '/news/$id/edit'
+      fullPath: '/admin/news/$id/edit'
+      preLoaderRoute: typeof AdminNewsIdEditRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/events/$id/edit': {
+      id: '/admin/events/$id/edit'
+      path: '/events/$id/edit'
+      fullPath: '/admin/events/$id/edit'
+      preLoaderRoute: typeof AdminEventsIdEditRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
+interface AdminRouteRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminEventsNewRoute: typeof AdminEventsNewRoute
+  AdminNewsNewRoute: typeof AdminNewsNewRoute
+  AdminApplicationsIndexRoute: typeof AdminApplicationsIndexRoute
+  AdminEventsIndexRoute: typeof AdminEventsIndexRoute
+  AdminNewsIndexRoute: typeof AdminNewsIndexRoute
+  AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+  AdminEventsIdEditRoute: typeof AdminEventsIdEditRoute
+  AdminNewsIdEditRoute: typeof AdminNewsIdEditRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+  AdminEventsNewRoute: AdminEventsNewRoute,
+  AdminNewsNewRoute: AdminNewsNewRoute,
+  AdminApplicationsIndexRoute: AdminApplicationsIndexRoute,
+  AdminEventsIndexRoute: AdminEventsIndexRoute,
+  AdminNewsIndexRoute: AdminNewsIndexRoute,
+  AdminUsersIndexRoute: AdminUsersIndexRoute,
+  AdminEventsIdEditRoute: AdminEventsIdEditRoute,
+  AdminNewsIdEditRoute: AdminNewsIdEditRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   SectionsRoute: SectionsRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,

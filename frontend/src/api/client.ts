@@ -17,7 +17,6 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// если 401 — пробуем refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -27,9 +26,10 @@ apiClient.interceptors.response.use(
       original._retry = true
 
       const refreshToken = authStore.getRefreshToken()
+
+      // если нет refresh токена — просто чистим стейт без редиректа
       if (!refreshToken) {
         authStore.clearTokens()
-        window.location.href = '/auth/login'
         return Promise.reject(error)
       }
 
@@ -42,7 +42,10 @@ apiClient.interceptors.response.use(
         return apiClient(original)
       } catch {
         authStore.clearTokens()
-        window.location.href = '/auth/login'
+        // редиректим только если пользователь был авторизован
+        if (window.location.pathname.startsWith('/profile')) {
+          window.location.href = '/auth/login'
+        }
         return Promise.reject(error)
       }
     }

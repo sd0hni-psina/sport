@@ -153,12 +153,15 @@ func (r *Repository) CountConfirmed(ctx context.Context, eventID int64) (int, er
 }
 
 func (r *Repository) UpdateStatus(ctx context.Context, id int64, status domain.ApplicationStatus, adminNotes *string) error {
-	_, err := r.db.Exec(ctx,
+	tag, err := r.db.Exec(ctx,
 		`UPDATE applications SET status = $1, admin_notes = $2, updated_at = $3 WHERE id = $4`,
 		status, adminNotes, time.Now(), id,
 	)
 	if err != nil {
 		return fmt.Errorf("applications.repo: update status: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
 	}
 	return nil
 }

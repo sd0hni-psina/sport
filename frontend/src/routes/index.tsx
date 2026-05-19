@@ -5,12 +5,19 @@ import { eventsApi } from '@/api/events'
 import { newsApi } from '@/api/news'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Calendar, Users, ChevronRight, MapPin, Clock } from 'lucide-react'
+import { MapPin, Clock, Calendar, Users, Medal } from 'lucide-react'
 import type { Event, Post } from '@/types'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
+
+const TICKER_ITEMS = [
+  'Чемпионат по мини-футболу — 20 мая',
+  'Запись в секцию плавания открыта',
+  'День молодёжи — спортивный праздник 25 июня',
+  'Районный забег «Атырау бежит» — 1 июня',
+]
 
 function HomePage() {
   const { data: counters } = useQuery({
@@ -28,104 +35,144 @@ function HomePage() {
     queryFn: () => newsApi.list().then(r => r.data),
   })
 
-  const events = eventsData?.data?.slice(0, 4) ?? []
-  const posts = newsData?.data?.slice(0, 3) ?? []
+  const events = eventsData?.data?.slice(0, 3) ?? []
+  const posts  = newsData?.data?.slice(0, 3) ?? []
 
   return (
     <div>
+      {/* Тикер */}
+      <div className="overflow-hidden py-2.5" style={{ background: '#F5A623' }}>
+        <div
+          className="flex gap-0 whitespace-nowrap"
+          style={{
+            animation: 'ticker 30s linear infinite',
+            display: 'inline-flex',
+          }}
+        >
+          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            <span
+              key={i}
+              className="px-10 text-xs font-bold uppercase tracking-wide"
+              style={{ color: '#0D1F3C' }}
+            >
+              ⚡ {item}
+            </span>
+          ))}
+        </div>
+        <style>{`@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
+      </div>
+
       {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-700 to-blue-500 text-white py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Массовый спорт Атырау
-          </h1>
-          <p className="text-blue-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Участвуй в городских спортивных мероприятиях, записывайся на секции и следи за новостями
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/events"
-              className="px-6 py-3 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+      <section className="bg-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            {/* Бейдж */}
+            <div
+              className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full mb-6"
+              style={{ background: '#FFF8E7', border: '1px solid #F5A62340', color: '#D97706' }}
             >
-              Все мероприятия
-            </Link>
-            <Link
-              to="/auth/register"
-              className="px-6 py-3 bg-blue-600 border border-white/30 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
-            >
-              Зарегистрироваться
-            </Link>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#F5A623' }} />
+              Официальная платформа Акимата города Атырау
+            </div>
+
+            <h1 className="text-5xl font-bold leading-tight mb-4" style={{ color: '#0D1F3C', letterSpacing: '-0.5px' }}>
+              Массовый спорт<br />
+              <span style={{ color: '#2563EB' }}>Атырау</span>
+            </h1>
+
+            <p className="text-base leading-relaxed mb-8 max-w-md" style={{ color: '#64748B' }}>
+              Участвуй в городских спортивных мероприятиях, записывайся на секции и следи за новостями спортивной жизни города
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/events"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+                style={{ background: '#0D1F3C', color: '#ffffff' }}
+              >
+                Все мероприятия
+              </Link>
+              <Link
+                to="/auth/register"
+                className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold transition-colors border"
+                style={{ background: '#ffffff', color: '#0D1F3C', borderColor: '#E2E8F0' }}
+              >
+                Зарегистрироваться
+              </Link>
+            </div>
+          </div>
+
+          {/* Статы справа */}
+          <div className="flex flex-col gap-4">
+            {[
+              { icon: <Calendar size={20} />, num: counters?.total_events ?? '—', label: 'мероприятий проведено' },
+              { icon: <Users size={20} />,    num: counters?.total_participants ?? '—', label: 'участников за всё время' },
+              { icon: <Medal size={20} />,    num: '18', label: 'активных секций' },
+            ].map((s, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-4 rounded-xl border"
+                style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: '#0D1F3C', color: '#F5A623' }}
+                >
+                  {s.icon}
+                </div>
+                <div>
+                  <p className="text-2xl font-bold" style={{ color: '#0D1F3C' }}>{s.num}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>{s.label}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Счётчики */}
-      <section className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 gap-6">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-              <Calendar className="text-blue-600" size={22} />
-            </div>
-            <span className="text-3xl font-bold text-gray-900">
-              {counters?.total_events ?? '—'}
-            </span>
-            <span className="text-sm text-gray-500">мероприятий проведено</span>
+      {/* Мероприятия */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#F5A623' }}>
+              Ближайшие события
+            </p>
+            <h2 className="text-2xl font-bold" style={{ color: '#0D1F3C' }}>Афиша мероприятий</h2>
           </div>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-              <Users className="text-green-600" size={22} />
-            </div>
-            <span className="text-3xl font-bold text-gray-900">
-              {counters?.total_participants ?? '—'}
-            </span>
-            <span className="text-sm text-gray-500">участников за всё время</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Ближайшие мероприятия */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Ближайшие мероприятия</h2>
-          <Link
-            to="/events"
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Все <ChevronRight size={16} />
+          <Link to="/events" className="text-sm font-medium" style={{ color: '#2563EB' }}>
+            Все мероприятия →
           </Link>
         </div>
 
         {events.length === 0 ? (
-          <p className="text-gray-500 text-sm">Нет предстоящих мероприятий</p>
+          <p className="text-sm text-slate-400">Нет предстоящих мероприятий</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {events.map((event: Event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {events.map((e: Event) => <EventCard key={e.id} event={e} />)}
           </div>
         )}
       </section>
 
       {/* Новости */}
-      <section className="bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Новости</h2>
-            <Link
-              to="/news"
-              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Все <ChevronRight size={16} />
+      <section className="border-t" style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#F5A623' }}>
+                Медиа
+              </p>
+              <h2 className="text-2xl font-bold" style={{ color: '#0D1F3C' }}>Последние новости</h2>
+            </div>
+            <Link to="/news" className="text-sm font-medium" style={{ color: '#2563EB' }}>
+              Все новости →
             </Link>
           </div>
 
           {posts.length === 0 ? (
-            <p className="text-gray-500 text-sm">Нет новостей</p>
+            <p className="text-sm text-slate-400">Нет новостей</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {posts.map((post: Post) => (
-                <NewsCard key={post.id} post={post} />
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {posts.map((p: Post) => <NewsCard key={p.id} post={p} />)}
             </div>
           )}
         </div>
@@ -139,22 +186,55 @@ function EventCard({ event }: { event: Event }) {
     <Link
       to="/events/$id"
       params={{ id: String(event.id) }}
-      className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
+      className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-shadow hover:shadow-lg"
+      style={{ border: '1px solid #E2E8F0' }}
     >
-      <div className="bg-gradient-to-br from-blue-500 to-blue-700 h-24 flex items-center justify-center">
-        <span className="text-white font-bold text-lg">{event.sport_type}</span>
-      </div>
-      <div className="p-4 flex flex-col gap-2 flex-1">
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">{event.name}</h3>
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <Clock size={12} />
-          <span>
-            {format(new Date(event.time_start), 'd MMM, HH:mm', { locale: ru })}
-          </span>
+      {/* Шапка */}
+      <div
+        className="h-20 flex items-center justify-center relative"
+        style={{ background: '#0D1F3C' }}
+      >
+        <span className="text-3xl">
+          {event.sport_type === 'Бег' ? '🏃' :
+           event.sport_type === 'Футбол' ? '⚽' :
+           event.sport_type === 'Плавание' ? '🏊' :
+           event.sport_type === 'Волейбол' ? '🏐' :
+           event.sport_type === 'Баскетбол' ? '🏀' : '🏅'}
+        </span>
+        <div
+          className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded"
+          style={{ background: '#F5A623', color: '#0D1F3C' }}
+        >
+          {format(new Date(event.time_start), 'd MMM', { locale: ru })}
         </div>
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <MapPin size={12} />
-          <span className="line-clamp-1">{event.location}</span>
+        <div
+          className="absolute top-2 right-2 text-xs font-semibold px-2 py-1 rounded"
+          style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}
+        >
+          Открыта запись
+        </div>
+      </div>
+
+      {/* Тело */}
+      <div className="p-4 flex flex-col gap-2 flex-1">
+        <h3 className="font-semibold text-sm leading-snug" style={{ color: '#0D1F3C' }}>
+          {event.name}
+        </h3>
+        <div className="flex flex-col gap-1 mt-auto">
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94A3B8' }}>
+            <MapPin size={11} />
+            <span className="line-clamp-1">{event.location}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94A3B8' }}>
+            <Clock size={11} />
+            {format(new Date(event.time_start), 'HH:mm', { locale: ru })}
+          </div>
+        </div>
+        <div
+          className="mt-2 w-full py-2 rounded-lg text-xs font-semibold text-center transition-colors"
+          style={{ background: '#0D1F3C', color: '#fff' }}
+        >
+          Записаться
         </div>
       </div>
     </Link>
@@ -166,22 +246,25 @@ function NewsCard({ post }: { post: Post }) {
     <Link
       to="/news/$id"
       params={{ id: String(post.id) }}
-      className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+      className="group bg-white rounded-2xl overflow-hidden transition-shadow hover:shadow-lg"
+      style={{ border: '1px solid #E2E8F0' }}
     >
-      {post.cover_image && (
-        <img
-          src={post.cover_image}
-          alt={post.title}
-          className="w-full h-40 object-cover"
-        />
+      {post.cover_image ? (
+        <img src={post.cover_image} alt={post.title} className="w-full h-40 object-cover" />
+      ) : (
+        <div className="w-full h-40 flex items-center justify-center" style={{ background: '#0D1F3C' }}>
+          <span className="text-4xl opacity-40">🏆</span>
+        </div>
       )}
       <div className="p-4">
-        <p className="text-xs text-gray-400 mb-1">
-          {post.published_at
-            ? format(new Date(post.published_at), 'd MMMM yyyy', { locale: ru })
-            : ''}
-        </p>
-        <h3 className="font-semibold text-gray-900 line-clamp-2">{post.title}</h3>
+        {post.published_at && (
+          <p className="text-xs mb-1.5" style={{ color: '#94A3B8' }}>
+            {format(new Date(post.published_at), 'd MMMM yyyy', { locale: ru })}
+          </p>
+        )}
+        <h3 className="font-semibold text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2" style={{ color: '#0D1F3C' }}>
+          {post.title}
+        </h3>
       </div>
     </Link>
   )

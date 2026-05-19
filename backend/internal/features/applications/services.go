@@ -62,7 +62,10 @@ func (s *Service) Apply(ctx context.Context, userID int64, eventID int64, req Ap
 	// проверка дубликата
 	existing, err := s.repo.GetByUserAndEvent(ctx, userID, eventID, req.ChildID)
 	if err == nil && existing != nil {
-		return nil, domain.ErrAlreadyExists
+		if existing.Status == domain.ApplicationStatusPending ||
+			existing.Status == domain.ApplicationStatusConfirmed {
+			return nil, domain.ErrAlreadyExists
+		}
 	}
 
 	var notes *string
@@ -156,7 +159,9 @@ func (s *Service) AdminListByEvent(ctx context.Context, eventID int64, status st
 func calculateAge(birthDate time.Time) int {
 	now := time.Now()
 	years := now.Year() - birthDate.Year()
-	if now.YearDay() < birthDate.YearDay() {
+	// сравниваем месяц и день — без YearDay
+	if now.Month() < birthDate.Month() ||
+		(now.Month() == birthDate.Month() && now.Day() < birthDate.Day()) {
 		years--
 	}
 	return years

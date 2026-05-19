@@ -1,49 +1,60 @@
 import { Link } from '@tanstack/react-router'
+import { useSyncExternalStore, useState } from 'react'
 import { authStore } from '@/store/auth'
-import { useState } from 'react'
 import { Menu, X, Trophy } from 'lucide-react'
 
 const navLinks = [
   { to: '/events', label: 'Мероприятия' },
-  { to: '/news', label: 'Новости' },
-  { to: '/sections', label: 'Секции' },
+  { to: '/news',   label: 'Новости'      },
+  { to: '/sections', label: 'Секции'     },
 ]
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const isAuth = authStore.isAuthenticated()
+  const isAuth = useSyncExternalStore(
+    authStore.subscribe,
+    authStore.isAuthenticated,
+    authStore.isAuthenticated,
+  )
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <header className="sticky top-0 z-50" style={{ background: '#0D1F3C' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Лого */}
-          <Link to="/" className="flex items-center gap-2 font-bold text-lg text-blue-600">
-            <Trophy size={22} />
-            <span>Атырау Спорт</span>
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#F5A623' }}>
+              <Trophy size={18} color="#0D1F3C" />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="font-semibold text-white text-sm">Атырау Спорт</span>
+              <span className="text-xs" style={{ color: '#7A8FA8' }}>Акимат города</span>
+            </div>
           </Link>
 
           {/* Десктоп навигация */}
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map(link => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                activeProps={{ className: 'text-blue-600' }}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ color: '#A0AEC0' }}
+                activeProps={{ style: { color: '#ffffff', background: '#1A3259' } }}
               >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          {/* Кнопки справа */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Правая часть */}
+          <div className="hidden md:flex items-center gap-2">
             {isAuth ? (
               <Link
                 to="/profile"
-                className="text-sm font-medium px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                style={{ background: '#F5A623', color: '#0D1F3C' }}
               >
                 Профиль
               </Link>
@@ -51,13 +62,15 @@ export function Header() {
               <>
                 <Link
                   to="/auth/login"
-                  className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{ color: '#A0AEC0' }}
                 >
                   Войти
                 </Link>
                 <Link
                   to="/auth/register"
-                  className="text-sm font-medium px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  style={{ background: '#F5A623', color: '#0D1F3C' }}
                 >
                   Регистрация
                 </Link>
@@ -65,9 +78,10 @@ export function Header() {
             )}
           </div>
 
-          {/* Бургер для мобилки */}
+          {/* Бургер */}
           <button
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+            className="md:hidden p-2 rounded-lg transition-colors"
+            style={{ color: '#A0AEC0' }}
             onClick={() => setMenuOpen(!menuOpen)}
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -77,31 +91,34 @@ export function Header() {
 
       {/* Мобильное меню */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-3">
-          {navLinks.map((link) => (
+        <div className="md:hidden border-t px-4 py-3 flex flex-col gap-1" style={{ borderColor: '#1A3259', background: '#0D1F3C' }}>
+          {navLinks.map(link => (
             <Link
               key={link.to}
               to={link.to}
-              className="text-sm font-medium text-gray-600 py-2"
+              className="px-3 py-2.5 rounded-lg text-sm font-medium"
+              style={{ color: '#A0AEC0' }}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
             </Link>
           ))}
-          {isAuth ? (
-            <Link to="/profile" className="text-sm font-medium text-blue-600 py-2">
-              Профиль
-            </Link>
-          ) : (
-            <>
-              <Link to="/auth/login" className="text-sm font-medium text-gray-600 py-2">
-                Войти
+          <div className="border-t mt-2 pt-2 flex flex-col gap-1" style={{ borderColor: '#1A3259' }}>
+            {isAuth ? (
+              <Link to="/profile" className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#F5A623' }}>
+                Профиль
               </Link>
-              <Link to="/auth/register" className="text-sm font-medium text-blue-600 py-2">
-                Регистрация
-              </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link to="/auth/login" className="px-3 py-2.5 text-sm font-medium" style={{ color: '#A0AEC0' }}>
+                  Войти
+                </Link>
+                <Link to="/auth/register" className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#F5A623' }}>
+                  Регистрация
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       )}
     </header>

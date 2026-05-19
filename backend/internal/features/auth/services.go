@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -97,6 +98,10 @@ func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*TokenResponse
 		return nil, err
 	}
 
+	if user.IsBlocked {
+		return nil, domain.ErrUserBlocked
+	}
+
 	return s.generateTokens(user)
 }
 
@@ -107,28 +112,41 @@ func (s *Service) Refresh(ctx context.Context, req RefreshRequest) (*TokenRespon
 		return nil, fmt.Errorf("%w: invalid refresh token", domain.ErrUnauthorized)
 	}
 
-	userID, err := strconv.ParseInt(claims.Subject, 10, 64)
+	var userID int64
+	fmt.Sscanf(claims.Subject, "%d", &userID)
+
+	// верифицируем что пользователь существует и не заблокирован
+	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
-		return nil, domain.ErrUnauthorized
+		return nil, fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
+	}
+	if user.IsBlocked {
+		return nil, domain.ErrUserBlocked
 	}
 
-	_ = userID
-	// в будущем: проверка refresh токена в Redis (blacklist)
+	// генерируем оба токена
+	return s.generateTokens(user)
+}
 
-	return &TokenResponse{
-		AccessToken: s.newAccessToken(claims),
-	}, nil
+func generateSMSCode() (string, error) {
+	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return "", fmt.Errorf("generate sms code: %w", err)
+	}
+	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
 func (s *Service) sendSMSCode(ctx context.Context, phone string) error {
-	code := fmt.Sprintf("%06d", rand.Intn(1000000))
-	key := smsCodePrefix + phone
+	code, err := generateSMSCode()
+	if err != nil {
+		return fmt.Errorf("auth.service: %w", err)
+	}
 
+	key := smsCodePrefix + phone
 	if err := s.rdb.Set(ctx, key, code, smsCodeTTL).Err(); err != nil {
 		return fmt.Errorf("auth.service: save sms code: %w", err)
 	}
 
-	// TODO: реальная отправка через Beeline/Twilio
 	slog.Info("sms code", "phone", phone, "code", code)
 	return nil
 }
@@ -187,19 +205,4 @@ func (s *Service) parseToken(tokenStr, secret string) (*jwtClaims, error) {
 		return nil, fmt.Errorf("invalid token")
 	}
 	return token.Claims.(*jwtClaims), nil
-}
-
-func (s *Service) newAccessToken(claims *jwtClaims) string {
-	now := time.Now()
-	newClaims := jwtClaims{
-		Role: claims.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   claims.Subject,
-			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(s.cfg.AccessTTL) * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(now),
-		},
-	}
-	token, _ := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims).
-		SignedString([]byte(s.cfg.AccessSecret))
-	return token
 }

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link, redirect } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/api/client'
 import { applicationsApi } from '@/api/applications'
@@ -8,33 +8,36 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { User, Star, Calendar, LogOut, ChevronRight } from 'lucide-react'
 import type { User as UserType, Application } from '@/types'
+import { eventsApi } from '@/api/events'
+import type { Event } from '@/types'
+
 
 export const Route = createFileRoute('/profile/')({
+  beforeLoad: () => {
+    if (!authStore.isAuthenticated()) {
+      throw redirect({ to: '/auth/login' })
+    }
+  },
   component: ProfilePage,
 })
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending:            { label: 'Ожидает',   color: 'bg-yellow-50 text-yellow-700' },
+  pending:            { label: 'Ожидает',      color: 'bg-yellow-50 text-yellow-700' },
   confirmed:          { label: 'Подтверждена', color: 'bg-green-50 text-green-700' },
   cancelled_by_user:  { label: 'Отменена вами', color: 'bg-gray-100 text-gray-500' },
-  cancelled_by_admin: { label: 'Отменена', color: 'bg-red-50 text-red-500' },
-  no_show:            { label: 'Не явился', color: 'bg-red-50 text-red-500' },
-  attended:           { label: 'Посетил',   color: 'bg-blue-50 text-blue-700' },
+  cancelled_by_admin: { label: 'Отменена',     color: 'bg-red-50 text-red-500' },
+  no_show:            { label: 'Не явился',    color: 'bg-red-50 text-red-500' },
+  attended:           { label: 'Посетил',      color: 'bg-blue-50 text-blue-700' },
 }
 
 function ProfilePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  // редирект если не авторизован
-  if (!authStore.isAuthenticated()) {
-    navigate({ to: '/auth/login' })
-    return null
-  }
-
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['me'],
-    queryFn: () => apiClient.get<{ data: UserType }>('/me').then(r => r.data.data),
+    queryFn: () =>
+      apiClient.get<{ data: UserType }>('/me').then(r => r.data.data),
   })
 
   const { data: applicationsData, isLoading: appsLoading } = useQuery({
@@ -42,9 +45,23 @@ function ProfilePage() {
     queryFn: () => applicationsApi.myApplications().then(r => r.data),
   })
 
+  const applications = applicationsData?.data ?? []
+
+  const eventIds = [...new Set(applications.map(a => a.event_id))]
+
+  const { data: eventsMap } = useQuery({
+  queryKey: ['events-by-ids', eventIds],
+  queryFn: async () => {
+    const events = await eventsApi.getByIds(eventIds)
+    return Object.fromEntries(events.map((e: Event) => [e.id, e]))
+  },
+  enabled: eventIds.length > 0,
+})
+
   const cancelMutation = useMutation({
     mutationFn: (id: number) => applicationsApi.cancel(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-applications'] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] }),
   })
 
   async function handleLogout() {
@@ -53,8 +70,6 @@ function ProfilePage() {
     queryClient.clear()
     navigate({ to: '/' })
   }
-
-  const applications = applicationsData?.data ?? []
 
   if (userLoading) {
     return (
@@ -67,7 +82,10 @@ function ProfilePage() {
 
   if (!user) return null
 
-  const fullName = [user.last_name, user.first_name, user.middle_name].filter(Boolean).join(' ')
+  const fullName = [user.last_name, user.first_name, user.middle_name]
+    .filter(Boolean)
+    .join(' ')
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -171,13 +189,10 @@ function ProfilePage() {
                       className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors"
                     >
                       <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <Link
-                          to="/events/$id"
-                          params={{ id: String(app.event_id) }}
-                          className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
-                        >
-                          Мероприятие #{app.event_id}
-                        </Link>
+                        <Link to="/events/$id" params={{ id: String(app.event_id) }}
+  className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+  {eventsMap?.[app.event_id]?.name ?? `Мероприятие #${app.event_id}`}
+</Link>
                         <p className="text-xs text-gray-400">
                           {format(new Date(app.created_at), 'd MMM yyyy', { locale: ru })}
                         </p>

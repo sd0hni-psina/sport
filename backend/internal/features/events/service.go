@@ -156,5 +156,18 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if _, err := s.repo.GetByID(ctx, id); err != nil {
 		return err
 	}
+
+	count, err := s.repo.CountActiveApplications(ctx, id)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return fmt.Errorf("%w: event has %d active applications, cancel them first", domain.ErrForbidden, count)
+	}
+
 	return s.repo.Delete(ctx, id)
+}
+
+func (s *Service) ListAll(ctx context.Context) ([]*domain.Event, error) {
+	return s.repo.ListAll(ctx)
 }

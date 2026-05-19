@@ -2,36 +2,49 @@ import { Trophy } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-400 py-10 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between gap-6">
+    <footer style={{ background: '#0D1F3C' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8" style={{ borderBottom: '1px solid #1A3259' }}>
+
           <div>
-            <div className="flex items-center gap-2 text-white font-bold text-lg mb-2">
-              <Trophy size={20} />
-              <span>Атырау Спорт</span>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#F5A623' }}>
+                <Trophy size={16} color="#0D1F3C" />
+              </div>
+              <span className="text-white font-semibold text-sm">Атырау Спорт</span>
             </div>
-            <p className="text-sm">
-              Отдел культуры и спорта<br />
-              Акимат города Атырау
+            <p className="text-sm leading-relaxed" style={{ color: '#7A8FA8' }}>
+              Платформа для цифровизации<br />
+              массовых спортивных мероприятий<br />
+              города Атырау
             </p>
           </div>
 
-          <div className="flex flex-col gap-1 text-sm">
-            <span className="text-white font-medium mb-1">Навигация</span>
-            <a href="/events" className="hover:text-white transition-colors">Мероприятия</a>
-            <a href="/news" className="hover:text-white transition-colors">Новости</a>
-            <a href="/sections" className="hover:text-white transition-colors">Секции</a>
+          <div>
+            <p className="text-white text-sm font-semibold mb-3">Разделы</p>
+            <div className="flex flex-col gap-2 text-sm" style={{ color: '#7A8FA8' }}>
+              <a href="/events" className="hover:text-white transition-colors">Мероприятия</a>
+              <a href="/news"   className="hover:text-white transition-colors">Новости</a>
+              <a href="/sections" className="hover:text-white transition-colors">Секции</a>
+            </div>
           </div>
 
-          <div className="text-sm">
-            <span className="text-white font-medium block mb-1">Контакты</span>
-            <p>г. Атырау, ул. Азаттык 25</p>
-            <p>sport@atyrau.gov.kz</p>
+          <div>
+            <p className="text-white text-sm font-semibold mb-3">Контакты</p>
+            <div className="flex flex-col gap-2 text-sm" style={{ color: '#7A8FA8' }}>
+              <span>г. Атырау, ул. Азаттык 25</span>
+              <span>sport@atyrau.gov.kz</span>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-6 text-xs text-center">
-          © {new Date().getFullYear()} Акимат города Атырау. Все права защищены.
+        <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="text-xs" style={{ color: '#7A8FA8' }}>
+            © {new Date().getFullYear()} Акимат города Атырау
+          </span>
+          <span className="text-xs" style={{ color: '#4A5568' }}>
+            Отдел культуры и спорта
+          </span>
         </div>
       </div>
     </footer>
