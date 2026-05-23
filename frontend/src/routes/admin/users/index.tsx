@@ -6,6 +6,11 @@ import { ru } from 'date-fns/locale'
 import { Search, ShieldOff, Shield } from 'lucide-react'
 import { useState } from 'react'
 import type { User } from '@/types'
+import { toast } from 'sonner'
+import { ErrorState } from '@/components/shared/ErrorState'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { Skeleton } from '@/components/shared/Skeleton'
+
 
 export const Route = createFileRoute('/admin/users/')({
   component: AdminUsersPage,
@@ -15,16 +20,22 @@ function AdminUsersPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch  } = useQuery({
     queryKey: ['admin-users'],
     queryFn: () => apiClient.get<{ data: User[] }>('/admin/users').then(r => r.data),
   })
 
   const blockMutation = useMutation({
-    mutationFn: ({ id, block }: { id: number; block: boolean }) =>
-      apiClient.patch(`/admin/users/${id}/${block ? 'block' : 'unblock'}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
-  })
+  mutationFn: ({ id, block }: { id: number; block: boolean }) =>
+    apiClient.patch(`/admin/users/${id}/${block ? 'block' : 'unblock'}`),
+  onSuccess: (_, vars) => {
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    toast.success(vars.block ? 'Пользователь заблокирован' : 'Пользователь разблокирован')
+  },
+  onError: (err: any) => {
+    toast.error(err.response?.data?.error ?? 'Ошибка')
+  },
+})
 
   const users: User[] = (data?.data ?? []).filter((u: User) => {
     if (!search) return true
@@ -58,17 +69,15 @@ function AdminUsersPage() {
         />
       </div>
 
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 bg-white rounded-xl animate-pulse" style={{ border: '1px solid #E2E8F0' }} />
-          ))}
-        </div>
-      ) : users.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl" style={{ border: '1px solid #E2E8F0' }}>
-          <p className="text-sm" style={{ color: '#94A3B8' }}>Пользователей не найдено</p>
-        </div>
-      ) : (
+      {isError ? (
+  <ErrorState onRetry={refetch} />
+) : isLoading ? (
+  <div className="flex flex-col gap-3">
+    <Skeleton className="h-16" count={5} />
+  </div>
+) : users.length === 0 ? (
+  <EmptyState icon="👥" title="Пользователей не найдено" />
+) : (
         <div className="flex flex-col gap-2">
           {users.map((user: User) => (
             <div

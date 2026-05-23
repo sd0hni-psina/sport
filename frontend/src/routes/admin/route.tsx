@@ -11,6 +11,9 @@ export const Route = createFileRoute('/admin')({
     if (!authStore.isAuthenticated()) {
       throw redirect({ to: '/auth/login' })
     }
+    if (!authStore.isAdmin()) {
+      throw redirect({ to: '/' })
+    }
   },
   component: AdminLayout,
 })
@@ -35,8 +38,6 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
-
-      {/* Top bar */}
       <header className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 sm:px-6" style={{ background: '#0D1F3C', borderBottom: '1px solid #1A3259' }}>
         <div className="flex items-center gap-3">
           <button className="md:hidden p-1.5 rounded-lg" style={{ color: '#A0AEC0' }} onClick={() => setSideOpen(!sideOpen)}>
@@ -58,7 +59,7 @@ function AdminLayout() {
             ← На сайт
           </Link>
           <button
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
             style={{ color: '#7A8FA8', background: '#1A3259' }}
             onClick={() => { authStore.clearTokens(); window.location.href = '/' }}
           >
@@ -69,8 +70,6 @@ function AdminLayout() {
       </header>
 
       <div className="flex flex-1">
-
-        {/* Sidebar desktop */}
         <aside className="hidden md:flex flex-col w-56 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto" style={{ background: '#0D1F3C', borderRight: '1px solid #1A3259' }}>
           <nav className="flex flex-col gap-1 p-3 flex-1">
             {sideLinks.map(({ to, label, icon: Icon, exact }) => (
@@ -90,7 +89,6 @@ function AdminLayout() {
           </nav>
         </aside>
 
-        {/* Sidebar mobile */}
         {sideOpen && (
           <div className="md:hidden fixed inset-0 z-40" onClick={() => setSideOpen(false)}>
             <div className="absolute inset-0 bg-black/50" />
@@ -120,7 +118,6 @@ function AdminLayout() {
           </div>
         )}
 
-        {/* Контент */}
         <main className="flex-1 p-6 overflow-auto">
           <Outlet />
         </main>

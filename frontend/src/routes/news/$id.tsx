@@ -4,6 +4,8 @@ import { newsApi } from '@/api/news'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { ArrowLeft, Calendar } from 'lucide-react'
+import { Skeleton } from '@/components/shared/Skeleton'
+import { ErrorState } from '@/components/shared/ErrorState'
 
 export const Route = createFileRoute('/news/$id')({
   component: NewsDetailPage,
@@ -12,7 +14,7 @@ export const Route = createFileRoute('/news/$id')({
 function NewsDetailPage() {
   const { id } = Route.useParams()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['news', id],
     queryFn: () => newsApi.getById(Number(id)).then(r => r.data.data),
   })
@@ -20,28 +22,32 @@ function NewsDetailPage() {
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <div className="h-64 bg-gray-100 rounded-2xl animate-pulse mb-6" />
-        <div className="h-8 bg-gray-100 rounded animate-pulse mb-3" />
-        <div className="h-4 bg-gray-100 rounded animate-pulse w-2/3" />
+        <Skeleton className="h-64 mb-6" />
+        <Skeleton className="h-8 mb-3" />
+        <Skeleton className="h-4 w-1/2 mb-6" />
+        <Skeleton className="h-48" />
       </div>
     )
   }
 
-  if (!data) {
+  if (isError) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-20 text-center text-gray-400">
-        Новость не найдена
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <ErrorState message="Не удалось загрузить новость" onRetry={refetch} />
       </div>
     )
   }
+
+  if (!data) return null
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <Link
         to="/news"
-        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors"
+        style={{ color: '#94A3B8' }}
       >
-        <ArrowLeft size={16} /> Все новости
+        <ArrowLeft size={15} /> Все новости
       </Link>
 
       {data.cover_image && (
@@ -52,17 +58,34 @@ function NewsDetailPage() {
         />
       )}
 
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
-        <Calendar size={14} />
-        {data.published_at && (
-          <span>{format(new Date(data.published_at), 'd MMMM yyyy', { locale: ru })}</span>
-        )}
+      {data.published_at && (
+        <div className="flex items-center gap-2 mb-3" style={{ color: '#94A3B8' }}>
+          <Calendar size={14} />
+          <span className="text-sm">
+            {format(new Date(data.published_at), 'd MMMM yyyy', { locale: ru })}
+          </span>
+        </div>
+      )}
+
+      <h1 className="text-3xl font-bold mb-6 leading-snug" style={{ color: '#0D1F3C' }}>
+        {data.title}
+      </h1>
+
+      <div
+        className="text-sm leading-relaxed whitespace-pre-wrap"
+        style={{ color: '#475569' }}
+      >
+        {data.body}
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">{data.title}</h1>
-
-      <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
-        {data.body}
+      <div className="mt-10 pt-6" style={{ borderTop: '1px solid #E2E8F0' }}>
+        <Link
+          to="/news"
+          className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+          style={{ color: '#2563EB' }}
+        >
+          <ArrowLeft size={14} /> Вернуться к новостям
+        </Link>
       </div>
     </div>
   )

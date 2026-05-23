@@ -1,8 +1,10 @@
-import { createRootRoute, Outlet, Link } from '@tanstack/react-router'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
-function NotFound() {
+export const Route = createFileRoute('/$404')({
+  component: NotFoundPage,
+})
+
+function NotFoundPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="text-center max-w-md">
@@ -39,16 +41,3 @@ function NotFound() {
     </div>
   )
 }
-
-export const Route = createRootRoute({
-  component: () => (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
-  ),
-  notFoundComponent: NotFound,
-})

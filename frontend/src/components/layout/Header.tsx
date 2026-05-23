@@ -4,17 +4,23 @@ import { authStore } from '@/store/auth'
 import { Menu, X, Trophy } from 'lucide-react'
 
 const navLinks = [
-  { to: '/events', label: 'Мероприятия' },
-  { to: '/news',   label: 'Новости'      },
-  { to: '/sections', label: 'Секции'     },
+  { to: '/events',   label: 'Мероприятия' },
+  { to: '/news',     label: 'Новости'     },
+  { to: '/sections', label: 'Секции'      },
 ]
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+
   const isAuth = useSyncExternalStore(
     authStore.subscribe,
     authStore.isAuthenticated,
     authStore.isAuthenticated,
+  )
+  const isAdmin = useSyncExternalStore(
+    authStore.subscribe,
+    authStore.isAdmin,
+    authStore.isAdmin,
   )
 
   return (
@@ -22,7 +28,6 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Лого */}
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#F5A623' }}>
               <Trophy size={18} color="#0D1F3C" />
@@ -33,7 +38,6 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Десктоп навигация */}
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
               <Link
@@ -48,28 +52,38 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Правая часть */}
           <div className="hidden md:flex items-center gap-2">
             {isAuth ? (
-              <Link
-                to="/profile"
-                className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                style={{ background: '#F5A623', color: '#0D1F3C' }}
-              >
-                Профиль
-              </Link>
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style={{ color: '#F5A623' }}
+                  >
+                    Админка
+                  </Link>
+                )}
+                <Link
+                  to="/profile"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  style={{ background: '#F5A623', color: '#0D1F3C' }}
+                >
+                  Профиль
+                </Link>
+              </>
             ) : (
               <>
                 <Link
                   to="/auth/login"
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium"
                   style={{ color: '#A0AEC0' }}
                 >
                   Войти
                 </Link>
                 <Link
                   to="/auth/register"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold"
                   style={{ background: '#F5A623', color: '#0D1F3C' }}
                 >
                   Регистрация
@@ -78,9 +92,8 @@ export function Header() {
             )}
           </div>
 
-          {/* Бургер */}
           <button
-            className="md:hidden p-2 rounded-lg transition-colors"
+            className="md:hidden p-2 rounded-lg"
             style={{ color: '#A0AEC0' }}
             onClick={() => setMenuOpen(!menuOpen)}
           >
@@ -89,7 +102,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Мобильное меню */}
       {menuOpen && (
         <div className="md:hidden border-t px-4 py-3 flex flex-col gap-1" style={{ borderColor: '#1A3259', background: '#0D1F3C' }}>
           {navLinks.map(link => (
@@ -105,15 +117,22 @@ export function Header() {
           ))}
           <div className="border-t mt-2 pt-2 flex flex-col gap-1" style={{ borderColor: '#1A3259' }}>
             {isAuth ? (
-              <Link to="/profile" className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#F5A623' }}>
-                Профиль
-              </Link>
+              <>
+                {isAdmin && (
+                  <Link to="/admin" className="px-3 py-2.5 text-sm font-medium" style={{ color: '#F5A623' }} onClick={() => setMenuOpen(false)}>
+                    Админка
+                  </Link>
+                )}
+                <Link to="/profile" className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#F5A623' }} onClick={() => setMenuOpen(false)}>
+                  Профиль
+                </Link>
+              </>
             ) : (
               <>
-                <Link to="/auth/login" className="px-3 py-2.5 text-sm font-medium" style={{ color: '#A0AEC0' }}>
+                <Link to="/auth/login" className="px-3 py-2.5 text-sm font-medium" style={{ color: '#A0AEC0' }} onClick={() => setMenuOpen(false)}>
                   Войти
                 </Link>
-                <Link to="/auth/register" className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#F5A623' }}>
+                <Link to="/auth/register" className="px-3 py-2.5 text-sm font-semibold" style={{ color: '#F5A623' }} onClick={() => setMenuOpen(false)}>
                   Регистрация
                 </Link>
               </>

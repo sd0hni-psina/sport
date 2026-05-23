@@ -6,6 +6,7 @@ import { ru } from 'date-fns/locale'
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import type { Post } from '@/types'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/admin/news/')({
   component: AdminNewsPage,
@@ -21,12 +22,16 @@ function AdminNewsPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiClient.delete(`/admin/news/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-news'] })
-      setDeletingId(null)
-    },
-  })
+  mutationFn: (id: number) => apiClient.delete(`/admin/news/${id}`),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-news'] })
+    setDeletingId(null)
+    toast.success('Новость удалена')
+  },
+  onError: (err: any) => {
+    toast.error(err.response?.data?.error ?? 'Ошибка при удалении')
+  },
+})
 
   const posts: Post[] = data?.data ?? []
 

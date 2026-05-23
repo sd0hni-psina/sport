@@ -10,12 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SectionsRouteImport } from './routes/sections'
+import { Route as R404RouteImport } from './routes/$404'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile/index'
 import { Route as NewsIndexRouteImport } from './routes/news/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as ProfileUpcomingRouteImport } from './routes/profile/upcoming'
 import { Route as NewsIdRouteImport } from './routes/news/$id'
 import { Route as EventsIdRouteImport } from './routes/events/$id'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
@@ -32,6 +34,11 @@ import { Route as AdminEventsIdEditRouteImport } from './routes/admin/events/$id
 const SectionsRoute = SectionsRouteImport.update({
   id: '/sections',
   path: '/sections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R404Route = R404RouteImport.update({
+  id: '/$404',
+  path: '/$404',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRouteRoute = AdminRouteRouteImport.update({
@@ -63,6 +70,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const ProfileUpcomingRoute = ProfileUpcomingRouteImport.update({
+  id: '/profile/upcoming',
+  path: '/profile/upcoming',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const NewsIdRoute = NewsIdRouteImport.update({
   id: '/news/$id',
@@ -128,11 +140,13 @@ const AdminEventsIdEditRoute = AdminEventsIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/$404': typeof R404Route
   '/sections': typeof SectionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/profile/upcoming': typeof ProfileUpcomingRoute
   '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/news/': typeof NewsIndexRoute
@@ -148,11 +162,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$404': typeof R404Route
   '/sections': typeof SectionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/profile/upcoming': typeof ProfileUpcomingRoute
   '/admin': typeof AdminIndexRoute
   '/events': typeof EventsIndexRoute
   '/news': typeof NewsIndexRoute
@@ -170,11 +186,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/$404': typeof R404Route
   '/sections': typeof SectionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/profile/upcoming': typeof ProfileUpcomingRoute
   '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/news/': typeof NewsIndexRoute
@@ -193,11 +211,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/$404'
     | '/sections'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/profile/upcoming'
     | '/admin/'
     | '/events/'
     | '/news/'
@@ -213,11 +233,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$404'
     | '/sections'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/profile/upcoming'
     | '/admin'
     | '/events'
     | '/news'
@@ -234,11 +256,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/$404'
     | '/sections'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/profile/upcoming'
     | '/admin/'
     | '/events/'
     | '/news/'
@@ -256,11 +280,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  R404Route: typeof R404Route
   SectionsRoute: typeof SectionsRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   EventsIdRoute: typeof EventsIdRoute
   NewsIdRoute: typeof NewsIdRoute
+  ProfileUpcomingRoute: typeof ProfileUpcomingRoute
   EventsIndexRoute: typeof EventsIndexRoute
   NewsIndexRoute: typeof NewsIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
@@ -273,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/sections'
       fullPath: '/sections'
       preLoaderRoute: typeof SectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$404': {
+      id: '/$404'
+      path: '/$404'
+      fullPath: '/$404'
+      preLoaderRoute: typeof R404RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -316,6 +349,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/profile/upcoming': {
+      id: '/profile/upcoming'
+      path: '/profile/upcoming'
+      fullPath: '/profile/upcoming'
+      preLoaderRoute: typeof ProfileUpcomingRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/news/$id': {
       id: '/news/$id'
@@ -435,11 +475,13 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  R404Route: R404Route,
   SectionsRoute: SectionsRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   EventsIdRoute: EventsIdRoute,
   NewsIdRoute: NewsIdRoute,
+  ProfileUpcomingRoute: ProfileUpcomingRoute,
   EventsIndexRoute: EventsIndexRoute,
   NewsIndexRoute: NewsIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,

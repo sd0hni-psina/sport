@@ -5,6 +5,7 @@ import { apiClient } from '@/api/client'
 import { useState, useEffect } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/admin/events/$id/edit')({
   component: AdminEventEditPage,
@@ -92,9 +93,11 @@ function AdminEventEditPage() {
       if (form.prizes)           payload.prizes           = form.prizes
 
       await apiClient.put(`/admin/events/${id}`, payload)
-      navigate({ to: '/admin/events' })
+toast.success('Изменения сохранены')
+navigate({ to: '/admin/events' })
     } catch (err: any) {
-      setError(err.response?.data?.error ?? 'Ошибка при сохранении')
+      toast.error(err.response?.data?.error ?? 'Ошибка при сохранении')
+setError(err.response?.data?.error ?? 'Ошибка при сохранении')
     } finally {
       setLoading(false)
     }

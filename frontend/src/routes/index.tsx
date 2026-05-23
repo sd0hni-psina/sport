@@ -12,17 +12,22 @@ export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
-const TICKER_ITEMS = [
-  'Чемпионат по мини-футболу — 20 мая',
-  'Запись в секцию плавания открыта',
-  'День молодёжи — спортивный праздник 25 июня',
-  'Районный забег «Атырау бежит» — 1 июня',
-]
+// const TICKER_ITEMS = [
+//   'Чемпионат по мини-футболу — 20 мая',
+//   'Запись в секцию плавания открыта',
+//   'День молодёжи — спортивный праздник 25 июня',
+//   'Районный забег «Атырау бежит» — 1 июня',
+// ]
 
 function HomePage() {
   const { data: counters } = useQuery({
     queryKey: ['stats'],
     queryFn: () => analyticsApi.getCounters().then(r => r.data),
+  })
+
+  const { data: tickerData } = useQuery({
+  queryKey: ['events', 'ticker'],
+  queryFn: () => eventsApi.list({ page: 1 }).then(r => r.data),
   })
 
   const { data: eventsData } = useQuery({
@@ -37,30 +42,35 @@ function HomePage() {
 
   const events = eventsData?.data?.slice(0, 3) ?? []
   const posts  = newsData?.data?.slice(0, 3) ?? []
+  const tickerItems = tickerData?.data?.map((e: Event) =>
+  `${e.name} — ${format(new Date(e.time_start), 'd MMMM', { locale: ru })}`
+) ?? []
 
   return (
     <div>
       {/* Тикер */}
-      <div className="overflow-hidden py-2.5" style={{ background: '#F5A623' }}>
-        <div
-          className="flex gap-0 whitespace-nowrap"
-          style={{
-            animation: 'ticker 30s linear infinite',
-            display: 'inline-flex',
-          }}
+      {tickerItems.length > 0 && (
+  <div className="overflow-hidden py-2.5" style={{ background: '#F5A623' }}>
+    <div
+      style={{
+        display: 'inline-flex',
+        animation: 'ticker 30s linear infinite',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {[...tickerItems, ...tickerItems].map((item, i) => (
+        <span
+          key={i}
+          className="px-10 text-xs font-bold uppercase tracking-wide"
+          style={{ color: '#0D1F3C' }}
         >
-          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-            <span
-              key={i}
-              className="px-10 text-xs font-bold uppercase tracking-wide"
-              style={{ color: '#0D1F3C' }}
-            >
-              ⚡ {item}
-            </span>
-          ))}
-        </div>
-        <style>{`@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
-      </div>
+          ⚡ {item}
+        </span>
+      ))}
+    </div>
+    <style>{`@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
+  </div>
+      )}
 
       {/* Hero */}
       <section className="bg-white border-b border-slate-100">

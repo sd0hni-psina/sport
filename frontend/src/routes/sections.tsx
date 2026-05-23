@@ -2,6 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/api/client'
 import { MapPin, Phone, Clock, User } from 'lucide-react'
+import { Skeleton } from '@/components/shared/Skeleton'
+import { ErrorState } from '@/components/shared/ErrorState'
+import { EmptyState } from '@/components/shared/EmptyState'
 import type { Section } from '@/types'
 
 export const Route = createFileRoute('/sections')({
@@ -9,7 +12,7 @@ export const Route = createFileRoute('/sections')({
 })
 
 function SectionsPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['sections'],
     queryFn: () => apiClient.get<{ data: Section[] }>('/sections').then(r => r.data),
   })
@@ -17,70 +20,99 @@ function SectionsPage() {
   const sections = data?.data ?? []
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Секции</h1>
-      <p className="text-gray-500 mb-8">Спортивные секции и дисциплины города Атырау</p>
+    <div>
+      {/* Шапка */}
+      <div style={{ background: '#0D1F3C' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full mb-4"
+            style={{ background: '#F5A62320', border: '1px solid #F5A62340', color: '#F5A623' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#F5A623' }} />
+            Спортивная инфраструктура
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-3">Секции и дисциплины</h1>
+          <p className="text-base max-w-xl" style={{ color: '#7A8FA8' }}>
+            Спортивные секции города Атырау — собственные и партнёрские. Найди своё направление.
+          </p>
+        </div>
+      </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
-          ))}
-        </div>
-      ) : sections.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg font-medium">Секций пока нет</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sections.map((section: Section) => (
-            <SectionCard key={section.id} section={section} />
-          ))}
-        </div>
-      )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {isError ? (
+          <ErrorState onRetry={refetch} />
+        ) : isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <Skeleton className="h-52" count={6} />
+          </div>
+        ) : sections.length === 0 ? (
+          <EmptyState icon="🏋️" title="Секций пока нет" description="Информация о секциях скоро появится" />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {sections.map((section: Section) => (
+              <SectionCard key={section.id} section={section} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
 function SectionCard({ section }: { section: Section }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-bold text-gray-900 text-lg">{section.name}</h3>
-        {section.is_partner && (
-          <span className="shrink-0 text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium">
-            Партнёр
-          </span>
-        )}
-      </div>
+    <div
+      className="bg-white rounded-2xl overflow-hidden flex flex-col transition-shadow hover:shadow-lg"
+      style={{ border: '1px solid #E2E8F0' }}
+    >
+      {/* Цветная шапка */}
+      <div className="h-2" style={{ background: section.is_partner ? '#F5A623' : '#0D1F3C' }} />
 
-      <p className="text-sm text-gray-500 line-clamp-3">{section.description}</p>
+      <div className="p-5 flex flex-col gap-4 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-bold text-base leading-snug" style={{ color: '#0D1F3C' }}>
+            {section.name}
+          </h3>
+          {section.is_partner && (
+            <span
+              className="shrink-0 text-xs font-bold px-2 py-1 rounded-full"
+              style={{ background: '#FFF8E7', color: '#D97706' }}
+            >
+              Партнёр
+            </span>
+          )}
+        </div>
 
-      <div className="flex flex-col gap-2 text-sm text-gray-500 border-t border-gray-100 pt-4">
-        {section.trainer_name && (
-          <div className="flex items-center gap-2">
-            <User size={14} className="shrink-0 text-gray-400" />
-            <span>{section.trainer_name}</span>
-          </div>
-        )}
-        {section.address && (
-          <div className="flex items-center gap-2">
-            <MapPin size={14} className="shrink-0 text-gray-400" />
-            <span>{section.address}</span>
-          </div>
-        )}
-        {section.schedule && (
-          <div className="flex items-center gap-2">
-            <Clock size={14} className="shrink-0 text-gray-400" />
-            <span>{section.schedule}</span>
-          </div>
-        )}
-        {section.contact && (
-          <div className="flex items-center gap-2">
-            <Phone size={14} className="shrink-0 text-gray-400" />
-            <span>{section.contact}</span>
-          </div>
-        )}
+        <p className="text-sm leading-relaxed line-clamp-3" style={{ color: '#64748B' }}>
+          {section.description}
+        </p>
+
+        <div className="flex flex-col gap-2 mt-auto pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
+          {section.trainer_name && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
+              <User size={13} color="#94A3B8" />
+              <span>{section.trainer_name}</span>
+            </div>
+          )}
+          {section.address && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
+              <MapPin size={13} color="#94A3B8" />
+              <span>{section.address}</span>
+            </div>
+          )}
+          {section.schedule && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
+              <Clock size={13} color="#94A3B8" />
+              <span>{section.schedule}</span>
+            </div>
+          )}
+          {section.contact && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
+              <Phone size={13} color="#94A3B8" />
+              <span>{section.contact}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

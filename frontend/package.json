@@ -17,9 +17,12 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-leaflet": "^5.0.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
@@ -28,6 +31,7 @@
     "@tanstack/react-query-devtools": "^5.100.10",
     "@tanstack/router-devtools": "^1.167.0",
     "@tanstack/router-plugin": "^1.168.2",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

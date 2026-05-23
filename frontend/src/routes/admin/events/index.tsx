@@ -6,6 +6,10 @@ import { ru } from 'date-fns/locale'
 import { Plus, Pencil, Trash2, Eye, CheckCircle } from 'lucide-react'
 import type { Event } from '@/types'
 import { useState } from 'react'
+import { toast } from 'sonner'
+import { ErrorState } from '@/components/shared/ErrorState'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { Skeleton } from '@/components/shared/Skeleton'
 
 export const Route = createFileRoute('/admin/events/')({
   component: AdminEventsPage,
@@ -22,24 +26,34 @@ function AdminEventsPage() {
   const queryClient = useQueryClient()
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin-events'],
     queryFn: () => apiClient.get<{ data: Event[] }>('/admin/events').then(r => r.data),
   })
 
   const publishMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiClient.patch(`/admin/events/${id}/status`, { status: 'published' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-events'] }),
-  })
+  mutationFn: (id: number) =>
+    apiClient.patch(`/admin/events/${id}/status`, { status: 'published' }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-events'] })
+    toast.success('Мероприятие опубликовано')
+  },
+  onError: (err: any) => {
+    toast.error(err.response?.data?.error ?? 'Ошибка при публикации')
+  },
+})
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiClient.delete(`/admin/events/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-events'] })
-      setDeletingId(null)
-    },
-  })
+  mutationFn: (id: number) => apiClient.delete(`/admin/events/${id}`),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-events'] })
+    setDeletingId(null)
+    toast.success('Мероприятие удалено')
+  },
+  onError: (err: any) => {
+    toast.error(err.response?.data?.error ?? 'Ошибка при удалении')
+  },
+})
 
   const events: Event[] = data?.data ?? []
 
@@ -60,20 +74,27 @@ function AdminEventsPage() {
         </Link>
       </div>
 
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" style={{ border: '1px solid #E2E8F0' }} />
-          ))}
-        </div>
-      ) : events.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl" style={{ border: '1px solid #E2E8F0' }}>
-          <p className="text-sm font-medium" style={{ color: '#94A3B8' }}>Мероприятий нет</p>
-          <Link to="/admin/events/new" className="text-sm font-medium mt-2 inline-block" style={{ color: '#2563EB' }}>
-            Создать первое →
-          </Link>
-        </div>
-      ) : (
+      {isError ? (
+  <ErrorState onRetry={refetch} />
+) : isLoading ? (
+  <div className="flex flex-col gap-3">
+    <Skeleton className="h-20" count={4} />
+  </div>
+) : events.length === 0 ? (
+  <EmptyState
+    icon="📅"
+    title="Мероприятий нет"
+    action={
+      <Link
+        to="/admin/events/new"
+        className="text-sm font-medium px-4 py-2 rounded-xl text-white"
+        style={{ background: '#0D1F3C' }}
+      >
+        Создать первое
+      </Link>
+    }
+  />
+) : (
         <div className="flex flex-col gap-3">
           {events.map((event: Event) => {
             const statusStyle = STATUS_STYLES[event.status] ?? STATUS_STYLES.draft

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { apiClient } from '@/api/client'
 import { ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/admin/events/new')({
   component: AdminEventNewPage,
@@ -70,9 +71,11 @@ function AdminEventNewPage() {
       if (form.prizes)          payload.prizes          = form.prizes
 
       await apiClient.post('/admin/events', payload)
-      navigate({ to: '/admin/events' })
+toast.success('Мероприятие создано')
+navigate({ to: '/admin/events' })
     } catch (err: any) {
-      setError(err.response?.data?.error ?? 'Ошибка при создании')
+      toast.error(err.response?.data?.error ?? 'Ошибка при создании')
+setError(err.response?.data?.error ?? 'Ошибка при создании')
     } finally {
       setLoading(false)
     }

@@ -5,6 +5,8 @@ import { apiClient } from '@/api/client'
 import { useState, useEffect } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
+
 
 export const Route = createFileRoute('/admin/news/$id/edit')({
   component: AdminNewsEditPage,
@@ -71,9 +73,11 @@ function AdminNewsEditPage() {
       }
 
       await apiClient.put(`/admin/news/${id}`, payload)
-      navigate({ to: '/admin/news' })
+toast.success('Новость сохранена')
+navigate({ to: '/admin/news' })
     } catch (err: any) {
-      setError(err.response?.data?.error ?? 'Ошибка при сохранении')
+      toast.error(err.response?.data?.error ?? 'Ошибка при сохранении')
+setError(err.response?.data?.error ?? 'Ошибка при сохранении')
     } finally {
       setLoading(false)
     }
