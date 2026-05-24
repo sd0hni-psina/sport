@@ -1,6 +1,8 @@
 import { createRootRoute, Outlet, Link } from '@tanstack/react-router'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { ScrollToTop } from '@/components/shared/ScrollToTop'
+
 
 function NotFound() {
   return (
@@ -43,6 +45,7 @@ function NotFound() {
 export const Route = createRootRoute({
   component: () => (
     <div className="min-h-screen flex flex-col bg-white">
+      <ScrollToTop />
       <Header />
       <main className="flex-1">
         <Outlet />

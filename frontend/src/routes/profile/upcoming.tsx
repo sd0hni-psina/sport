@@ -5,11 +5,13 @@ import { applicationsApi } from '@/api/applications'
 import { authStore } from '@/store/auth'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { MapPin, Clock, ArrowLeft, Calendar, X } from 'lucide-react'
+import { MapPin, Clock, ArrowLeft, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/shared/Skeleton'
 import { EmptyState } from '@/components/shared/EmptyState'
 import type { Application, Event } from '@/types'
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
+
 
 export const Route = createFileRoute('/profile/upcoming')({
   beforeLoad: ({ location }) => {
@@ -58,13 +60,11 @@ function UpcomingPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="flex items-center gap-3 mb-8">
-        <Link
-          to="/profile"
-          className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: '#F1F5F9', color: '#64748B' }}
-        >
-          <ArrowLeft size={16} />
-        </Link>
+        <Breadcrumbs items={[
+  { label: 'Главная', to: '/' },
+  { label: 'Профиль', to: '/profile' },
+  { label: 'Предстоящие мероприятия' },
+]} />
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#0D1F3C' }}>Предстоящие мероприятия</h1>
           <p className="text-sm mt-0.5" style={{ color: '#94A3B8' }}>

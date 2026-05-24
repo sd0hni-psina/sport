@@ -7,6 +7,8 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { MapPin, Clock, Calendar, Users, Medal } from 'lucide-react'
 import type { Event, Post } from '@/types'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -43,26 +45,31 @@ function HomePage() {
   const events = eventsData?.data?.slice(0, 3) ?? []
   const posts  = newsData?.data?.slice(0, 3) ?? []
   const tickerItems = tickerData?.data?.map((e: Event) =>
-  `${e.name} — ${format(new Date(e.time_start), 'd MMMM', { locale: ru })}`
+    `${e.name} — ${format(new Date(e.time_start), 'd MMMM', { locale: ru })}`
 ) ?? []
 
-  return (
+return (
+  <>
+    <PageMeta
+      title="Главная"
+      description="Массовый спорт города Атырау — мероприятия, секции, новости"
+      />
     <div>
       {/* Тикер */}
       {tickerItems.length > 0 && (
-  <div className="overflow-hidden py-2.5" style={{ background: '#F5A623' }}>
+        <div className="overflow-hidden py-2.5" style={{ background: '#F5A623' }}>
     <div
       style={{
         display: 'inline-flex',
         animation: 'ticker 30s linear infinite',
         whiteSpace: 'nowrap',
       }}
-    >
+      >
       {[...tickerItems, ...tickerItems].map((item, i) => (
         <span
-          key={i}
-          className="px-10 text-xs font-bold uppercase tracking-wide"
-          style={{ color: '#0D1F3C' }}
+        key={i}
+        className="px-10 text-xs font-bold uppercase tracking-wide"
+        style={{ color: '#0D1F3C' }}
         >
           ⚡ {item}
         </span>
@@ -80,7 +87,7 @@ function HomePage() {
             <div
               className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full mb-6"
               style={{ background: '#FFF8E7', border: '1px solid #F5A62340', color: '#D97706' }}
-            >
+              >
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#F5A623' }} />
               Официальная платформа Акимата города Атырау
             </div>
@@ -99,14 +106,14 @@ function HomePage() {
                 to="/events"
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
                 style={{ background: '#0D1F3C', color: '#ffffff' }}
-              >
+                >
                 Все мероприятия
               </Link>
               <Link
                 to="/auth/register"
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold transition-colors border"
                 style={{ background: '#ffffff', color: '#0D1F3C', borderColor: '#E2E8F0' }}
-              >
+                >
                 Зарегистрироваться
               </Link>
             </div>
@@ -120,14 +127,14 @@ function HomePage() {
               { icon: <Medal size={20} />,    num: '18', label: 'активных секций' },
             ].map((s, i) => (
               <div
-                key={i}
-                className="flex items-center gap-4 p-4 rounded-xl border"
-                style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}
+              key={i}
+              className="flex items-center gap-4 p-4 rounded-xl border"
+              style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: '#0D1F3C', color: '#F5A623' }}
-                >
+                  >
                   {s.icon}
                 </div>
                 <div>
@@ -188,22 +195,23 @@ function HomePage() {
         </div>
       </section>
     </div>
+    </>
   )
 }
 
 function EventCard({ event }: { event: Event }) {
   return (
     <Link
-      to="/events/$id"
-      params={{ id: String(event.id) }}
-      className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-shadow hover:shadow-lg"
-      style={{ border: '1px solid #E2E8F0' }}
+    to="/events/$id"
+    params={{ id: String(event.id) }}
+    className="group bg-white rounded-2xl overflow-hidden flex flex-col transition-shadow hover:shadow-lg"
+    style={{ border: '1px solid #E2E8F0' }}
     >
       {/* Шапка */}
       <div
         className="h-20 flex items-center justify-center relative"
         style={{ background: '#0D1F3C' }}
-      >
+        >
         <span className="text-3xl">
           {event.sport_type === 'Бег' ? '🏃' :
            event.sport_type === 'Футбол' ? '⚽' :
@@ -214,13 +222,13 @@ function EventCard({ event }: { event: Event }) {
         <div
           className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded"
           style={{ background: '#F5A623', color: '#0D1F3C' }}
-        >
+          >
           {format(new Date(event.time_start), 'd MMM', { locale: ru })}
         </div>
         <div
           className="absolute top-2 right-2 text-xs font-semibold px-2 py-1 rounded"
           style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}
-        >
+          >
           Открыта запись
         </div>
       </div>
@@ -243,7 +251,7 @@ function EventCard({ event }: { event: Event }) {
         <div
           className="mt-2 w-full py-2 rounded-lg text-xs font-semibold text-center transition-colors"
           style={{ background: '#0D1F3C', color: '#fff' }}
-        >
+          >
           Записаться
         </div>
       </div>
@@ -254,10 +262,10 @@ function EventCard({ event }: { event: Event }) {
 function NewsCard({ post }: { post: Post }) {
   return (
     <Link
-      to="/news/$id"
-      params={{ id: String(post.id) }}
-      className="group bg-white rounded-2xl overflow-hidden transition-shadow hover:shadow-lg"
-      style={{ border: '1px solid #E2E8F0' }}
+    to="/news/$id"
+    params={{ id: String(post.id) }}
+    className="group bg-white rounded-2xl overflow-hidden transition-shadow hover:shadow-lg"
+    style={{ border: '1px solid #E2E8F0' }}
     >
       {post.cover_image ? (
         <img src={post.cover_image} alt={post.title} className="w-full h-40 object-cover" />

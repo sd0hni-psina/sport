@@ -6,6 +6,8 @@ import { Skeleton } from '@/components/shared/Skeleton'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
 import type { Section } from '@/types'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/sections')({
   component: SectionsPage,
@@ -20,6 +22,8 @@ function SectionsPage() {
   const sections = data?.data ?? []
 
   return (
+    <>
+    <PageMeta title="Секции" description="Спортивные секции города Атырау" />
     <div>
       {/* Шапка */}
       <div style={{ background: '#0D1F3C' }}>
@@ -56,6 +60,7 @@ function SectionsPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
 

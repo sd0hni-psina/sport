@@ -4,9 +4,10 @@ import { authStore } from '@/store/auth'
 import { Menu, X, Trophy } from 'lucide-react'
 
 const navLinks = [
-  { to: '/events',   label: 'Мероприятия' },
-  { to: '/news',     label: 'Новости'     },
-  { to: '/sections', label: 'Секции'      },
+  { to: '/events',    label: 'Мероприятия' },
+  { to: '/news',      label: 'Новости'     },
+  { to: '/sections',  label: 'Секции'      },
+  { to: '/analytics', label: 'Статистика'  },
 ]
 
 export function Header() {

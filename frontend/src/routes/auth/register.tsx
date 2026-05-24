@@ -4,6 +4,8 @@ import { authApi } from '@/api/auth'
 import { authStore } from '@/store/auth'
 import { Trophy, ArrowRight, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/auth/register')({
   beforeLoad: () => {
@@ -37,9 +39,40 @@ function RegisterPage() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
+  function validateBirthDate(date: string): string | null {
+  const d = new Date(date)
+  const now = new Date()
+  if (isNaN(d.getTime())) return 'Введите корректную дату рождения'
+  if (d > now) return 'Дата рождения не может быть в будущем'
+  const age = now.getFullYear() - d.getFullYear()
+  if (age > 120) return 'Введите корректную дату рождения'
+  return null
+}
+
+  function validatePhone(phone: string): string | null {
+  const cleaned = phone.replace(/\s/g, '')
+  if (!/^\+?[0-9]{10,13}$/.test(cleaned)) {
+    return 'Введите корректный номер телефона (например +77001234567)'
+  }
+  return null
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    const phoneError = validatePhone(form.phone_number)
+    const birthError = validateBirthDate(form.birth_date)
+if (birthError) {
+  toast.error(birthError)
+  setLoading(false)
+  return
+}
+if (phoneError) {
+  toast.error(phoneError)
+  setLoading(false)
+  return
+}
+
     try {
       await authApi.register({
         ...form,
@@ -71,6 +104,8 @@ function RegisterPage() {
   }
 
   return (
+    <>
+    <PageMeta title="Регистрация" />
     <div className="min-h-[85vh] flex">
 
       {/* Левая панель */}
@@ -230,5 +265,6 @@ function RegisterPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

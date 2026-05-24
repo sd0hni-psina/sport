@@ -1,14 +1,16 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { eventsApi } from '@/api/events'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { MapPin, Clock, Users, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MapPin, Clock, Users, Search, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useState } from 'react'
 import { Skeleton } from '@/components/shared/Skeleton'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
 import type { Event } from '@/types'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/events/')({
   component: EventsPage,
@@ -25,15 +27,17 @@ function EventsPage() {
   const [sport, setSport] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [date, setDate] = useState('')
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['events', sport, page],
-    queryFn: () => eventsApi.list({
-      sport: sport || undefined,
-      page,
-      page_size: PAGE_SIZE,
-    }).then(r => r.data),
-  })
+  queryKey: ['events', sport, date, page],
+  queryFn: () => eventsApi.list({
+    sport: sport || undefined,
+    date:  date  || undefined,
+    page,
+    page_size: PAGE_SIZE,
+  }).then(r => r.data),
+})
 
   const events = data?.data ?? []
   const pagination = data?.pagination
@@ -49,6 +53,8 @@ function EventsPage() {
   }
 
   return (
+    <>
+    <PageMeta title="Мероприятия" description="Городские спортивные мероприятия Атырау" />
     <div>
       {/* Шапка */}
       <div style={{ background: '#0D1F3C' }}>
@@ -82,6 +88,29 @@ function EventsPage() {
               style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
             />
           </div>
+
+          {/* Фильтр по дате */}
+<div className="flex items-center gap-3">
+  <div className="relative">
+    <input
+      type="date"
+      value={date}
+      onChange={e => { setDate(e.target.value); setPage(1) }}
+      className="px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+      style={{ border: '1px solid #E2E8F0', color: date ? '#0D1F3C' : '#94A3B8' }}
+    />
+  </div>
+  {date && (
+    <button
+      onClick={() => { setDate(''); setPage(1) }}
+      className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-xl transition-colors"
+      style={{ background: '#FEF2F2', color: '#DC2626' }}
+    >
+      <X size={12} />
+      Сбросить дату
+    </button>
+  )}
+</div>
 
           <div className="flex gap-2 flex-wrap">
             {SPORT_TYPES.map(type => (
@@ -127,6 +156,15 @@ function EventsPage() {
                 <EventCard key={event.id} event={event} />
               ))}
             </div>
+            {(sport || date || search) && (
+  <button
+    onClick={() => { setSport(''); setDate(''); setSearch(''); setPage(1) }}
+    className="text-xs font-medium px-3 py-1.5 rounded-xl transition-colors"
+    style={{ background: '#F1F5F9', color: '#64748B' }}
+  >
+    Сбросить все фильтры
+  </button>
+)}
 
             {/* Пагинация */}
             {pagination && pagination.total_pages > 1 && (
@@ -183,6 +221,7 @@ function EventsPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
 

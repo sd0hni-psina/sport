@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { Skeleton } from '@/components/shared/Skeleton'
 import type { Application, Event, User } from '@/types'
 import { awardsApi } from '@/api/awards'
+import { exportToCSV } from '@/lib/export-csv'
+import { Download, X } from 'lucide-react' 
 
 export const Route = createFileRoute('/admin/applications/')({
   component: AdminApplicationsPage,
@@ -96,17 +98,37 @@ function AdminApplicationsPage() {
   })
 
   const awardMutation = useMutation({
-  mutationFn: ({ id, data }: { id: number; data: { type: string; description: string } }) =>
-    awardsApi.createAward(id, data),
-  onSuccess: () => {
-    setAwardingId(null)
-    setAwardForm({ type: 'medal', description: '' })
-    toast.success('Награда выдана!')
-  },
-  onError: (err: any) => {
-    toast.error(err.response?.data?.error ?? 'Ошибка при выдаче награды')
-  },
-})
+    mutationFn: ({ id, data }: { id: number; data: { type: string; description: string } }) =>
+      awardsApi.createAward(id, data),
+    onSuccess: () => {
+      setAwardingId(null)
+      setAwardForm({ type: 'medal', description: '' })
+      toast.success('Награда выдана!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error ?? 'Ошибка при выдаче награды')
+    },
+  })
+
+  function handleExport() {
+    if (applications.length === 0) return
+
+    const headers = ['№', 'ФИО', 'Телефон', 'Статус', 'Волонтёр', 'Дата заявки', 'Комментарий']
+    const rows = applications.map((app: Application, i: number) => {
+      const user = usersMap?.[app.user_id]
+      const userName = user ? `${user.last_name} ${user.first_name} ${user.middle_name ?? ''}`.trim() : `ID ${app.user_id}`
+      const phone = user?.phone_number ?? '—'
+      const status = STATUS_STYLES[app.status]?.label ?? app.status
+      const isVolunteer = app.is_volunteer ? 'Да' : 'Нет'
+      const date = format(new Date(app.created_at), 'd MMM yyyy HH:mm', { locale: ru })
+      const notes = app.notes ?? '—'
+
+      return [String(i + 1), userName, phone, status, isVolunteer, date, notes]
+    })
+
+    const eventName = eventDetail?.name ?? 'мероприятие'
+    exportToCSV(`участники_${eventName}.csv`, headers, rows)
+  }
 
   const events: Event[] = eventsData?.data ?? []
 
@@ -114,7 +136,6 @@ function AdminApplicationsPage() {
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold" style={{ color: '#0D1F3C' }}>Заявки</h1>
-        
         <p className="text-sm mt-1" style={{ color: '#94A3B8' }}>Управление заявками участников</p>
       </div>
 
@@ -122,7 +143,10 @@ function AdminApplicationsPage() {
       <div className="bg-white rounded-2xl p-5 mb-5 flex flex-col sm:flex-row gap-3" style={{ border: '1px solid #E2E8F0' }}>
         <select
           value={selectedEventId}
-          onChange={e => setSelectedEventId(e.target.value ? Number(e.target.value) : '')}
+          onChange={e => {
+            setSelectedEventId(e.target.value ? Number(e.target.value) : '')
+            setStatusFilter('')
+          }}
           className="flex-1 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
         >
@@ -132,34 +156,77 @@ function AdminApplicationsPage() {
           ))}
         </select>
 
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          style={{ border: '1px solid #E2E8F0', color: '#0D1F3C', minWidth: '160px' }}
-        >
-          <option value="">Все статусы</option>
-          {Object.entries(STATUS_STYLES).map(([key, val]) => (
-            <option key={key} value={key}>{val.label}</option>
-          ))}
-        </select>
+        {statusFilter && (
+          <button
+            onClick={() => setStatusFilter('')}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+            style={{ background: '#FEF2F2', color: '#DC2626' }}
+          >
+            <X size={14} />
+            Сбросить фильтр
+          </button>
+        )}
       </div>
 
-      {/* Инфо о мероприятии */}
+      {/* Инфо о мероприятии и Счётчики по статусам */}
       {eventDetail && (
-        <div
-          className="flex items-center gap-4 p-4 rounded-xl mb-5"
-          style={{ background: '#0D1F3C' }}
-        >
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm truncate">{eventDetail.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: '#7A8FA8' }}>
-              {format(new Date(eventDetail.time_start), 'd MMMM yyyy, HH:mm', { locale: ru })} · {eventDetail.location}
-            </p>
+        <div className="mb-5">
+          {/* Шапка мероприятия */}
+          <div
+            className="flex items-center gap-4 p-4 rounded-t-xl"
+            style={{ background: '#0D1F3C' }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm truncate">{eventDetail.name}</p>
+              <p className="text-xs mt-0.5" style={{ color: '#7A8FA8' }}>
+                {format(new Date(eventDetail.time_start), 'd MMMM yyyy, HH:mm', { locale: ru })} · {eventDetail.location}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <p className="text-white font-bold text-lg">{applications.length}</p>
+                <p className="text-xs" style={{ color: '#7A8FA8' }}>заявок</p>
+              </div>
+              {applications.length > 0 && (
+                <button
+                  onClick={handleExport}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                  style={{ background: '#F5A623', color: '#0D1F3C' }}
+                  title="Экспорт в CSV"
+                >
+                  <Download size={14} />
+                  CSV
+                </button>
+              )}
+            </div>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-white font-bold text-lg">{applications.length}</p>
-            <p className="text-xs" style={{ color: '#7A8FA8' }}>заявок</p>
+
+          {/* Счётчики по статусам */}
+          <div
+            className="grid grid-cols-3 sm:grid-cols-6 rounded-b-xl overflow-hidden"
+            style={{ border: '1px solid #E2E8F0', borderTop: 'none' }}
+          >
+            {Object.entries(STATUS_STYLES).map(([key, val]) => {
+              const count = applications.filter((a: Application) => a.status === key).length
+              return (
+                <button
+                  key={key}
+                  onClick={() => setStatusFilter(statusFilter === key ? '' : key)}
+                  className="flex flex-col items-center py-3 px-2 transition-colors"
+                  style={{
+                    background: statusFilter === key ? val.bg : '#fff',
+                    borderRight: '1px solid #E2E8F0',
+                  }}
+                >
+                  <span className="text-lg font-bold" style={{ color: statusFilter === key ? val.color : '#0D1F3C' }}>
+                    {count}
+                  </span>
+                  <span className="text-xs mt-0.5 text-center leading-tight" style={{ color: '#94A3B8', fontSize: '10px' }}>
+                    {val.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
@@ -253,72 +320,74 @@ function AdminApplicationsPage() {
                     </button>
                   ))}
                   {app.status === 'attended' && (
-  <button
-    onClick={() => setAwardingId(app.id)}
-    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-    style={{ background: '#FFF8E7', color: '#D97706' }}
-  >
-    🏅 Выдать награду
-  </button>
-)}
+                    <button
+                      onClick={() => setAwardingId(app.id)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      style={{ background: '#FFF8E7', color: '#D97706' }}
+                    >
+                      🏅 Выдать награду
+                    </button>
+                  )}
                 </div>
               </div>
             )
           })}
         </div>
       )}
+
+      {/* Модалка награды */}
       {awardingId !== null && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
-    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-      <h3 className="font-bold text-lg mb-5" style={{ color: '#0D1F3C' }}>Выдать награду</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="font-bold text-lg mb-5" style={{ color: '#0D1F3C' }}>Выдать награду</h3>
 
-      <div className="flex flex-col gap-4">
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748B' }}>Тип награды</label>
-          <select
-            value={awardForm.type}
-            onChange={e => setAwardForm(p => ({ ...p, type: e.target.value }))}
-            className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
-          >
-            <option value="medal">🥇 Медаль</option>
-            <option value="diploma">📜 Диплом</option>
-            <option value="certificate">🏆 Сертификат</option>
-          </select>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748B' }}>Тип награды</label>
+                <select
+                  value={awardForm.type}
+                  onChange={e => setAwardForm(p => ({ ...p, type: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
+                >
+                  <option value="medal">🥇 Медаль</option>
+                  <option value="diploma">📜 Диплом</option>
+                  <option value="certificate">🏆 Сертификат</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748B' }}>Описание</label>
+                <input
+                  value={awardForm.description}
+                  onChange={e => setAwardForm(p => ({ ...p, description: e.target.value }))}
+                  placeholder="1 место в забеге 5 км"
+                  className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => { setAwardingId(null); setAwardForm({ type: 'medal', description: '' }) }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border"
+                style={{ borderColor: '#E2E8F0', color: '#64748B' }}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => awardMutation.mutate({ id: awardingId, data: awardForm })}
+                disabled={awardMutation.isPending || !awardForm.description}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: '#0D1F3C' }}
+              >
+                {awardMutation.isPending ? 'Выдача...' : 'Выдать'}
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748B' }}>Описание</label>
-          <input
-            value={awardForm.description}
-            onChange={e => setAwardForm(p => ({ ...p, description: e.target.value }))}
-            placeholder="1 место в забеге 5 км"
-            className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={() => { setAwardingId(null); setAwardForm({ type: 'medal', description: '' }) }}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold border"
-          style={{ borderColor: '#E2E8F0', color: '#64748B' }}
-        >
-          Отмена
-        </button>
-        <button
-          onClick={() => awardMutation.mutate({ id: awardingId, data: awardForm })}
-          disabled={awardMutation.isPending || !awardForm.description}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-          style={{ background: '#0D1F3C' }}
-        >
-          {awardMutation.isPending ? 'Выдача...' : 'Выдать'}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </div>
   )
 }

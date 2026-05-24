@@ -5,6 +5,9 @@ import {
   Users, ClipboardList, LogOut, Trophy, Menu, X
 } from 'lucide-react'
 import { useState } from 'react'
+import { logout } from '@/lib/logout'
+import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin')({
   beforeLoad: () => {
@@ -30,6 +33,8 @@ function AdminLayout() {
   const [sideOpen, setSideOpen] = useState(false)
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   function isActive(to: string, exact?: boolean) {
     if (exact) return currentPath === to
@@ -59,13 +64,13 @@ function AdminLayout() {
             ← На сайт
           </Link>
           <button
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
-            style={{ color: '#7A8FA8', background: '#1A3259' }}
-            onClick={() => { authStore.clearTokens(); window.location.href = '/' }}
-          >
-            <LogOut size={13} />
-            Выйти
-          </button>
+  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+  style={{ color: '#7A8FA8', background: '#1A3259' }}
+  onClick={() => logout(queryClient, navigate)}
+>
+  <LogOut size={13} />
+  Выйти
+</button>
         </div>
       </header>
 

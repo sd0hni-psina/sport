@@ -6,6 +6,9 @@ import { ru } from 'date-fns/locale'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { Skeleton } from '@/components/shared/Skeleton'
 import { ErrorState } from '@/components/shared/ErrorState'
+import { PageMeta } from '@/components/shared/PageMeta'
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
+
 
 export const Route = createFileRoute('/news/$id')({
   component: NewsDetailPage,
@@ -41,14 +44,14 @@ function NewsDetailPage() {
   if (!data) return null
 
   return (
+    <>
+    {data && <PageMeta title={data.title} description={data.body.slice(0, 160)} />}
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <Link
-        to="/news"
-        className="inline-flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors"
-        style={{ color: '#94A3B8' }}
-      >
-        <ArrowLeft size={15} /> Все новости
-      </Link>
+      <Breadcrumbs items={[
+  { label: 'Главная', to: '/' },
+  { label: 'Новости', to: '/news' },
+  { label: data?.title ?? '...' },
+]} />
 
       {data.cover_image && (
         <img
@@ -88,5 +91,6 @@ function NewsDetailPage() {
         </Link>
       </div>
     </div>
+    </>
   )
 }

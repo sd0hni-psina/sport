@@ -4,6 +4,8 @@ import { authApi } from '@/api/auth'
 import { authStore } from '@/store/auth'
 import { Trophy, ArrowRight, Phone, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/auth/login')({
   beforeLoad: () => {
@@ -57,6 +59,8 @@ function LoginPage() {
   }
 
   return (
+    <>
+    <PageMeta title="Вход" />
     <div className="min-h-[85vh] flex">
 
       {/* Левая панель — декоративная */}
@@ -206,5 +210,6 @@ function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

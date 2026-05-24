@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/shared/Skeleton'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
 import type { Post } from '@/types'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/news/')({
   component: NewsPage,
@@ -21,6 +23,8 @@ function NewsPage() {
   const posts = data?.data ?? []
 
   return (
+    <>
+    <PageMeta title="Новости" description="Новости спортивной жизни города Атырау" />
     <div>
       {/* Шапка */}
       <div style={{ background: '#0D1F3C' }}>
@@ -65,6 +69,7 @@ function NewsPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
 

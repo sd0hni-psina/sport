@@ -14,6 +14,9 @@ import { Skeleton } from '@/components/shared/Skeleton'
 import type { User as UserType, Application, Child } from '@/types'
 import { awardsApi } from '@/api/awards'
 import type { Award } from '@/types'
+import { PageMeta } from '@/components/shared/PageMeta'
+import { logout } from '@/lib/logout'
+
 
 export const Route = createFileRoute('/profile/')({
   beforeLoad: ({ location }) => {
@@ -134,10 +137,7 @@ function ProfilePage() {
   })
 
   async function handleLogout() {
-    await authApi.logout()
-    authStore.clearTokens()
-    queryClient.clear()
-    navigate({ to: '/' })
+    await logout(queryClient, navigate)
   }
 
   function startEditProfile() {
@@ -184,6 +184,8 @@ function ProfilePage() {
   const fullName = [user.last_name, user.first_name, user.middle_name].filter(Boolean).join(' ')
 
   return (
+    <>
+    <PageMeta title="Профиль" />
     <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-8" style={{ color: '#0D1F3C' }}>Профиль</h1>
 
@@ -588,5 +590,6 @@ function ProfilePage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

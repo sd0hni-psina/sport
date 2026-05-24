@@ -6,6 +6,8 @@ import {
   Plus, ArrowRight, Clock, CheckCircle,
 } from 'lucide-react'
 import { Skeleton } from '@/components/shared/Skeleton'
+import { PageMeta } from '@/components/shared/PageMeta'
+
 
 export const Route = createFileRoute('/admin/')({
   component: AdminDashboard,
@@ -49,6 +51,8 @@ function AdminDashboard() {
   ]
 
   return (
+    <>
+    <PageMeta title="Дашборд — Админ" />
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold" style={{ color: '#0D1F3C' }}>Дашборд</h1>
@@ -175,5 +179,6 @@ function AdminDashboard() {
         ))}
       </div>
     </div>
+    </>
   )
 }

@@ -13,6 +13,9 @@ import { ErrorState } from '@/components/shared/ErrorState'
 import type { Application } from '@/types'
 import { useNavigate } from '@tanstack/react-router'
 import { EventMap } from '@/components/shared/EventMap'
+import { PageMeta } from '@/components/shared/PageMeta'
+import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
+
 
 
 export const Route = createFileRoute('/events/$id')({
@@ -118,16 +121,19 @@ function EventPage() {
 
   const canApply = !existingApplication || !!cancelledApplication
 
+  const isEventAvailable = data.status === 'published'
+  const isEventPast = new Date(data.time_start) < new Date()
+
   return (
+    <>
+    {data && <PageMeta title={data.name} description={data.description.slice(0, 160)} />}
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Назад */}
-      <Link
-        to="/events"
-        className="inline-flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors"
-        style={{ color: '#94A3B8' }}
-      >
-        <ArrowLeft size={15} /> Все мероприятия
-      </Link>
+      <Breadcrumbs items={[
+  { label: 'Главная', to: '/' },
+  { label: 'Мероприятия', to: '/events' },
+  { label: data?.name ?? '...' },
+]} />
 
       {/* Шапка */}
       <div className="rounded-2xl p-8 text-white mb-6" style={{ background: '#0D1F3C' }}>
@@ -227,45 +233,51 @@ function EventPage() {
               </div>
             )}
 
-            {/* Кнопки */}
-            {!isAuth ? (
-              <button
-  onClick={() => navigate({
-    to: '/auth/login',
-    state: { from: `/events/${id}` },
-  })}
-  className="block text-center w-full py-3 rounded-xl text-sm font-semibold text-white"
-  style={{ background: '#0D1F3C' }}
->
-  Войдите чтобы записаться
-</button>
-            ) : canApply ? (
-              <>
-                {error && (
-                  <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#DC2626' }}>
-                    {error}
-                  </p>
-                )}
-                <button
-                  onClick={() => applyMutation.mutate()}
-                  disabled={applyMutation.isPending}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-50"
-                  style={{ background: '#0D1F3C' }}
-                >
-                  {applyMutation.isPending ? 'Отправка...' : cancelledApplication ? 'Подать заявку снова' : 'Подать заявку'}
-                </button>
-              </>
-            ) : canCancel ? (
-              <button
-                onClick={() => cancelMutation.mutate(existingApplication!.id)}
-                disabled={cancelMutation.isPending}
-                className="w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: '#FEF2F2', color: '#DC2626' }}
-              >
-                <X size={15} />
-                {cancelMutation.isPending ? 'Отмена...' : 'Отменить заявку'}
-              </button>
-            ) : null}
+            {!isEventAvailable || isEventPast ? (
+  <div
+    className="px-3 py-2.5 rounded-xl text-sm font-medium text-center"
+    style={{ background: '#F1F5F9', color: '#94A3B8' }}
+  >
+    {data.status === 'cancelled'  ? 'Мероприятие отменено'  :
+     data.status === 'completed'  ? 'Мероприятие завершено' :
+     isEventPast                  ? 'Мероприятие прошло'    :
+     'Запись недоступна'}
+  </div>
+) : !isAuth ? (
+  <button
+    onClick={() => navigate({ to: '/auth/login', state: { from: `/events/${id}` } })}
+    className="block text-center w-full py-3 rounded-xl text-sm font-semibold text-white"
+    style={{ background: '#0D1F3C' }}
+  >
+    Войдите чтобы записаться
+  </button>
+) : canApply ? (
+  <>
+    {error && (
+      <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#DC2626' }}>
+        {error}
+      </p>
+    )}
+    <button
+      onClick={() => applyMutation.mutate()}
+      disabled={applyMutation.isPending}
+      className="w-full py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
+      style={{ background: '#0D1F3C' }}
+    >
+      {applyMutation.isPending ? 'Отправка...' : cancelledApplication ? 'Подать заявку снова' : 'Подать заявку'}
+    </button>
+  </>
+) : canCancel ? (
+  <button
+    onClick={() => cancelMutation.mutate(existingApplication!.id)}
+    disabled={cancelMutation.isPending}
+    className="w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+    style={{ background: '#FEF2F2', color: '#DC2626' }}
+  >
+    <X size={15} />
+    {cancelMutation.isPending ? 'Отмена...' : 'Отменить заявку'}
+  </button>
+) : null}
 
             <p className="text-xs mt-3 text-center" style={{ color: '#94A3B8' }}>
               Отмена не позднее чем за {data.cancel_deadline_hrs} ч до начала
@@ -313,5 +325,6 @@ function EventPage() {
 )}
       </div>
     </div>
+    </>
   )
 }
