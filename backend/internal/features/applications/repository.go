@@ -187,3 +187,51 @@ func (r *Repository) BlockUserIfNeeded(ctx context.Context, userID int64, thresh
 	}
 	return nil
 }
+
+type ApplicationWithEvent struct {
+	Application *domain.Application
+	Event       *domain.Event
+}
+
+func (r *Repository) ListUpcomingByUser(ctx context.Context, userID int64) ([]*ApplicationWithEvent, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			a.id, a.user_id, a.event_id, a.child_id, a.status,
+			a.is_volunteer, a.notes, a.admin_notes, a.created_at, a.updated_at,
+			e.id, e.name, e.sport_type, e.description, e.location,
+			e.location_lat, e.location_lng, e.time_start, e.time_end,
+			e.instructor_name, e.instructor_bio, e.min_age, e.max_age,
+			e.max_participants, e.prizes, e.cancel_deadline_hrs,
+			e.status, e.created_at, e.updated_at
+		FROM applications a
+		JOIN events e ON e.id = a.event_id
+		WHERE a.user_id = $1
+		AND a.status IN ('pending', 'confirmed')
+		AND e.time_start > NOW()
+		ORDER BY e.time_start ASC`,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("applications.repo: list upcoming: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*ApplicationWithEvent
+	for rows.Next() {
+		a := &domain.Application{}
+		e := &domain.Event{}
+		if err := rows.Scan(
+			&a.ID, &a.UserID, &a.EventID, &a.ChildID, &a.Status,
+			&a.IsVolunteer, &a.Notes, &a.AdminNotes, &a.CreatedAt, &a.UpdatedAt,
+			&e.ID, &e.Name, &e.SportType, &e.Description, &e.Location,
+			&e.LocationLat, &e.LocationLng, &e.TimeStart, &e.TimeEnd,
+			&e.InstructorName, &e.InstructorBio, &e.MinAge, &e.MaxAge,
+			&e.MaxParticipants, &e.Prizes, &e.CancelDeadlineHrs,
+			&e.Status, &e.CreatedAt, &e.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("applications.repo: scan upcoming: %w", err)
+		}
+		result = append(result, &ApplicationWithEvent{Application: a, Event: e})
+	}
+	return result, nil
+}

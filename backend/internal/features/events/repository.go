@@ -220,3 +220,32 @@ func (r *Repository) ListAll(ctx context.Context) ([]*domain.Event, error) {
 	}
 	return result, nil
 }
+
+func (r *Repository) Count(ctx context.Context, f ListEventsFilter) (int, error) {
+	query := `SELECT COUNT(*) FROM events WHERE status = 'published'`
+	args := []any{}
+	argN := 1
+
+	if f.SportType != "" {
+		query += fmt.Sprintf(" AND sport_type = $%d", argN)
+		args = append(args, f.SportType)
+		argN++
+	}
+	if f.Date != "" {
+		query += fmt.Sprintf(" AND DATE(time_start) = $%d", argN)
+		args = append(args, f.Date)
+		argN++
+	}
+	if f.Age != nil {
+		query += fmt.Sprintf(" AND (min_age IS NULL OR min_age <= $%d) AND (max_age IS NULL OR max_age >= $%d)", argN, argN)
+		args = append(args, *f.Age)
+		argN++
+	}
+
+	var count int
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("events.repo: count: %w", err)
+	}
+	return count, nil
+}

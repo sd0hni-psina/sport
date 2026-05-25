@@ -13,6 +13,7 @@ type Config struct {
 	Postgres PostgresConfig
 	Redis    RedisConfig
 	JWT      JWTConfig
+	Resend   ResendConfig
 }
 
 type AppConfig struct {
@@ -41,6 +42,11 @@ type JWTConfig struct {
 	RefreshSecret string
 	AccessTTL     int
 	RefreshTTL    int
+}
+
+type ResendConfig struct {
+	APIKey string
+	From   string
 }
 
 func getEnv(key, fallback string) string {
@@ -107,6 +113,10 @@ func Load() *Config {
 			RefreshSecret: mustGetEnvSecure("JWT_REFRESH_SECRET", 32),
 			AccessTTL:     getEnvInt("JWT_ACCESS_TTL_MINUTES", 15),
 			RefreshTTL:    getEnvInt("JWT_REFRESH_TTL_DAYS", 30),
+		},
+		Resend: ResendConfig{
+			APIKey: mustGetEnv("RESEND_API_KEY"),
+			From:   getEnv("RESEND_FROM", "onboarding@resend.dev"),
 		},
 	}
 }

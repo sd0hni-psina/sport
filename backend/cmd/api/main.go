@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sd0hni-psina/sport/internal/config"
+	"github.com/sd0hni-psina/sport/internal/platform/email"
 	"github.com/sd0hni-psina/sport/internal/platform/logger"
 	"github.com/sd0hni-psina/sport/internal/platform/postgres"
 	"github.com/sd0hni-psina/sport/internal/platform/redis"
@@ -38,7 +39,10 @@ func main() {
 	}
 	defer rdb.Close()
 
-	srv := server.New(cfg, pg, rdb)
+	emailClient := email.New(cfg.Resend.APIKey, cfg.Resend.From)
+	slog.Info("email client initialized", "from", cfg.Resend.From)
+
+	srv := server.New(cfg, pg, rdb, emailClient)
 
 	go func() {
 		if err := srv.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {

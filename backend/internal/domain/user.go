@@ -15,6 +15,7 @@ type User struct {
 	LastName    string    `json:"last_name"`
 	MiddleName  *string   `json:"middle_name"`
 	PhoneNumber string    `json:"phone_number"`
+	Email       *string   `json:"email"`
 	City        string    `json:"city"`
 	Address     *string   `json:"address"`
 	BirthDate   time.Time `json:"birth_date"`

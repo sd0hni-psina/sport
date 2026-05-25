@@ -56,3 +56,11 @@ func parsePeriod(f Filter) (time.Time, time.Time, error) {
 		return now.AddDate(0, -1, 0), now, nil // по умолчанию месяц
 	}
 }
+
+func (s *Service) GetAdminSummary(ctx context.Context) (map[string]int, error) {
+	return s.repo.GetAdminSummary(ctx)
+}
+
+func (s *Service) GetDailyActivity(ctx context.Context, days int) ([]map[string]interface{}, error) {
+	return s.repo.GetDailyActivity(ctx, days)
+}

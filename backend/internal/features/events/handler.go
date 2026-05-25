@@ -26,13 +26,21 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	events, err := h.service.List(c.Request.Context(), f)
+	result, err := h.service.ListWithPagination(c.Request.Context(), f)
 	if err != nil {
 		h.handleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": events})
+	c.JSON(http.StatusOK, gin.H{
+		"data": result.Events,
+		"pagination": gin.H{
+			"page":        result.Page,
+			"page_size":   result.PageSize,
+			"total":       result.Total,
+			"total_pages": result.TotalPages,
+		},
+	})
 }
 
 func (h *Handler) GetByID(c *gin.Context) {

@@ -20,13 +20,13 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 
 func (r *Repository) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, middle_name, phone_number,
+		SELECT id, first_name, last_name, middle_name, phone_number, email,
 		       city, address, birth_date, role, reputation, is_blocked, created_at, updated_at
 		FROM users WHERE id = $1`
 
 	u := &domain.User{}
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber,
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber, &u.Email,
 		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 	)
@@ -58,14 +58,14 @@ func (r *Repository) CreateUser(ctx context.Context, u *domain.User) (int64, err
 
 func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, middle_name, phone_number,
+		SELECT id, first_name, last_name, middle_name, phone_number, email,
 		       city, address, birth_date, role, reputation, is_blocked, created_at, updated_at
 		FROM users
 		WHERE phone_number = $1`
 
 	u := &domain.User{}
 	err := r.db.QueryRow(ctx, query, phone).Scan(
-		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber,
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber, &u.Email,
 		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 	)
@@ -85,6 +85,56 @@ func (r *Repository) UserExistsByPhone(ctx context.Context, phone string) (bool,
 	).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("auth.repo: check exists: %w", err)
+	}
+	return exists, nil
+}
+
+func (r *Repository) CreateUserWithEmail(ctx context.Context, u *domain.User) (int64, error) {
+	query := `
+		INSERT INTO users (first_name, last_name, middle_name, phone_number, email, city, address, birth_date, role, reputation)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		RETURNING id`
+
+	var id int64
+	err := r.db.QueryRow(ctx, query,
+		u.FirstName, u.LastName, u.MiddleName, u.PhoneNumber, u.Email,
+		u.City, u.Address, u.BirthDate, u.Role, u.Reputation,
+	).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("auth.repo: create user with email: %w", err)
+	}
+	return id, nil
+}
+
+func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	query := `
+		SELECT id, first_name, last_name, middle_name, phone_number, email,
+		       city, address, birth_date, role, reputation, is_blocked, created_at, updated_at
+		FROM users
+		WHERE email = $1`
+
+	u := &domain.User{}
+	err := r.db.QueryRow(ctx, query, email).Scan(
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber, &u.Email,
+		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
+		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("auth.repo: get user by email: %w", err)
+	}
+	return u, nil
+}
+
+func (r *Repository) UserExistsByEmail(ctx context.Context, email string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email,
+	).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("auth.repo: check email exists: %w", err)
 	}
 	return exists, nil
 }

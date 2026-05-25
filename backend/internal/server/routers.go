@@ -7,10 +7,12 @@ import (
 	"github.com/sd0hni-psina/sport/internal/features/analytics"
 	"github.com/sd0hni-psina/sport/internal/features/applications"
 	"github.com/sd0hni-psina/sport/internal/features/auth"
+	"github.com/sd0hni-psina/sport/internal/features/awards"
 	"github.com/sd0hni-psina/sport/internal/features/events"
 	"github.com/sd0hni-psina/sport/internal/features/gallery"
 	"github.com/sd0hni-psina/sport/internal/features/news"
 	"github.com/sd0hni-psina/sport/internal/features/sections"
+	"github.com/sd0hni-psina/sport/internal/features/suggestions"
 	"github.com/sd0hni-psina/sport/internal/features/users"
 	"github.com/sd0hni-psina/sport/internal/middleware"
 )
@@ -19,7 +21,7 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 	r.GET("/health", s.healthCheck)
 
 	authRepo := auth.NewRepository(s.pg)
-	authService := auth.NewService(authRepo, s.rdb, s.cfg.JWT)
+	authService := auth.NewService(authRepo, s.rdb, s.cfg.JWT, s.emailClient)
 	authHandler := auth.NewHandler(authService)
 
 	eventsRepo := events.NewRepository(s.pg)
@@ -29,6 +31,10 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 	applicationsRepo := applications.NewRepository(s.pg)
 	applicationsService := applications.NewService(applicationsRepo, eventsRepo)
 	applicationsHandler := applications.NewHandler(applicationsService, authRepo)
+
+	awardsRepo := awards.NewRepository(s.pg)
+	awardsService := awards.NewService(awardsRepo, applicationsRepo)
+	awardsHandler := awards.NewHandler(awardsService)
 
 	usersRepo := users.NewRepository(s.pg)
 	usersService := users.NewService(usersRepo)
@@ -50,15 +56,37 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 	analyticsService := analytics.NewService(analyticsRepo)
 	analyticsHandler := analytics.NewHandler(analyticsService)
 
+	suggestionsRepo := suggestions.NewRepository(s.pg)
+	suggestionsHandler := suggestions.NewHandler(suggestionsRepo)
+
 	v1 := r.Group("/api/v1")
 	{
 		a := v1.Group("/auth")
 		{
-			a.POST("/register", authHandler.Register)
+
+			a.POST("/register",
+				// middleware.SMSByIP(s.rdb),
+				middleware.SMSByPhone(s.rdb),
+				authHandler.Register,
+			)
+			a.POST("/login",
+				// middleware.SMSByIP(s.rdb),
+				middleware.SMSByPhone(s.rdb),
+				authHandler.Login,
+			)
 			a.POST("/verify", authHandler.Verify)
-			a.POST("/login", authHandler.Login)
 			a.POST("/refresh", authHandler.Refresh)
 			a.POST("/logout", authHandler.Logout)
+
+			a.POST("/register-email",
+				authHandler.RegisterEmail,
+				middleware.EmailByIP(s.rdb),
+			)
+			a.POST("/login-email",
+				authHandler.LoginEmail,
+				middleware.EmailByIP(s.rdb),
+			)
+			a.POST("/verify-email", authHandler.VerifyEmail)
 		}
 
 		// публичные
@@ -85,12 +113,17 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			protected.POST("/me/children", usersHandler.AddChild)
 			protected.PUT("/me/children/:id", usersHandler.UpdateChild)
 			protected.DELETE("/me/children/:id", usersHandler.DeleteChild)
+			protected.GET("/me/upcoming", applicationsHandler.MyUpcoming)
 
 			protected.GET("/me/applications", applicationsHandler.MyApplications)
 			protected.POST("/events/:id/apply", applicationsHandler.Apply)
 			protected.DELETE("/applications/:id", applicationsHandler.Cancel)
 
 			protected.GET("/stats/full", analyticsHandler.GetStats)
+
+			protected.GET("/me/awards", awardsHandler.MyAwards)
+
+			protected.POST("/suggestions", suggestionsHandler.Create)
 		}
 
 		// требует JWT + admin
@@ -109,6 +142,7 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			admin.GET("/users", usersHandler.AdminListUsers)
 			admin.PATCH("/users/:id/block", usersHandler.AdminBlockUser)
 			admin.PATCH("/users/:id/unblock", usersHandler.AdminUnblockUser)
+			admin.GET("/users/:id", usersHandler.AdminGetUser)
 
 			admin.POST("/news", newsHandler.Create)
 			admin.PUT("/news/:id", newsHandler.Update)
@@ -123,6 +157,13 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			admin.DELETE("/gallery/:id", galleryHandler.Delete)
 
 			admin.GET("/analytics", analyticsHandler.AdminGetStats)
+			admin.GET("/analytics/daily", analyticsHandler.DailyActivity)
+			admin.GET("/summary", analyticsHandler.AdminSummary)
+
+			admin.POST("/applications/:id/award", awardsHandler.Create)
+			admin.GET("/applications/:id/awards", awardsHandler.ListByApplication)
+
+			admin.GET("/suggestions", suggestionsHandler.AdminList)
 
 		}
 	}

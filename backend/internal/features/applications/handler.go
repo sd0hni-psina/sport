@@ -145,3 +145,28 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 	}
 }
+
+func (h *Handler) MyUpcoming(c *gin.Context) {
+	userID := c.GetInt64(middleware.ContextUserID)
+
+	items, err := h.service.ListUpcomingByUser(c.Request.Context(), userID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	type item struct {
+		Application *domain.Application `json:"application"`
+		Event       *domain.Event       `json:"event"`
+	}
+
+	result := make([]item, 0, len(items))
+	for _, i := range items {
+		result = append(result, item{
+			Application: i.Application,
+			Event:       i.Event,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": result})
+}

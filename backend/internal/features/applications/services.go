@@ -166,3 +166,7 @@ func calculateAge(birthDate time.Time) int {
 	}
 	return years
 }
+
+func (s *Service) ListUpcomingByUser(ctx context.Context, userID int64) ([]*ApplicationWithEvent, error) {
+	return s.repo.ListUpcomingByUser(ctx, userID)
+}

@@ -13,21 +13,25 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sd0hni-psina/sport/internal/config"
 	"github.com/sd0hni-psina/sport/internal/domain"
+	"github.com/sd0hni-psina/sport/internal/platform/email"
 )
 
 const (
 	smsCodeTTL    = 5 * time.Minute
 	smsCodePrefix = "sms:code:"
+
+	emailCodePrefix = "email:code:"
 )
 
 type Service struct {
-	repo *Repository
-	rdb  *redis.Client
-	cfg  config.JWTConfig
+	repo        *Repository
+	rdb         *redis.Client
+	cfg         config.JWTConfig
+	emailClient *email.Client
 }
 
-func NewService(repo *Repository, rdb *redis.Client, cfg config.JWTConfig) *Service {
-	return &Service{repo: repo, rdb: rdb, cfg: cfg}
+func NewService(repo *Repository, rdb *redis.Client, cfg config.JWTConfig, emailClient *email.Client) *Service {
+	return &Service{repo: repo, rdb: rdb, cfg: cfg, emailClient: emailClient}
 }
 
 // Register — сохраняет пользователя и отправляет SMS-код
@@ -68,26 +72,37 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
 	return s.sendSMSCode(ctx, req.PhoneNumber)
 }
 
-// Login — отправляет SMS-код существующему пользователю
 func (s *Service) Login(ctx context.Context, req LoginRequest) error {
 	user, err := s.repo.GetUserByPhone(ctx, req.PhoneNumber)
 	if err != nil {
+		slog.Warn("login attempt for unknown phone",
+			"phone", req.PhoneNumber,
+		)
 		return err
 	}
 	if user.IsBlocked {
+		slog.Warn("login attempt for blocked user",
+			"user_id", user.ID,
+			"phone", req.PhoneNumber,
+		)
 		return domain.ErrUserBlocked
 	}
 	return s.sendSMSCode(ctx, req.PhoneNumber)
 }
 
-// Verify — проверяет SMS-код и возвращает токены
 func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*TokenResponse, error) {
 	key := smsCodePrefix + req.PhoneNumber
 	storedCode, err := s.rdb.Get(ctx, key).Result()
 	if err != nil {
+		slog.Warn("verify attempt with expired or missing code",
+			"phone", req.PhoneNumber,
+		)
 		return nil, fmt.Errorf("%w: code expired or not found", domain.ErrUnauthorized)
 	}
 	if storedCode != req.Code {
+		slog.Warn("verify attempt with invalid code",
+			"phone", req.PhoneNumber,
+		)
 		return nil, fmt.Errorf("%w: invalid code", domain.ErrUnauthorized)
 	}
 
@@ -99,9 +114,17 @@ func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*TokenResponse
 	}
 
 	if user.IsBlocked {
+		slog.Warn("verify attempt for blocked user",
+			"user_id", user.ID,
+			"phone", req.PhoneNumber,
+		)
 		return nil, domain.ErrUserBlocked
 	}
 
+	slog.Info("user logged in",
+		"user_id", user.ID,
+		"phone", req.PhoneNumber,
+	)
 	return s.generateTokens(user)
 }
 
@@ -205,4 +228,98 @@ func (s *Service) parseToken(tokenStr, secret string) (*jwtClaims, error) {
 		return nil, fmt.Errorf("invalid token")
 	}
 	return token.Claims.(*jwtClaims), nil
+}
+
+func (s *Service) RegisterEmail(ctx context.Context, req RegisterEmailRequest) error {
+	exists, err := s.repo.UserExistsByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return domain.ErrAlreadyExists
+	}
+
+	birthDate, err := time.Parse("2006-01-02", req.BirthDate)
+	if err != nil {
+		return fmt.Errorf("%w: birth_date must be YYYY-MM-DD", domain.ErrInvalidInput)
+	}
+
+	var middleName *string
+	if req.MiddleName != "" {
+		middleName = &req.MiddleName
+	}
+
+	email := req.Email
+	u := &domain.User{
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		MiddleName:  middleName,
+		PhoneNumber: "",
+		Email:       &email,
+		City:        req.City,
+		BirthDate:   birthDate,
+		Role:        domain.UserRoleUser,
+		Reputation:  100,
+	}
+
+	if _, err := s.repo.CreateUserWithEmail(ctx, u); err != nil {
+		return err
+	}
+
+	return s.sendEmailCode(ctx, req.Email)
+}
+
+func (s *Service) LoginEmail(ctx context.Context, req LoginEmailRequest) error {
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+	if user.IsBlocked {
+		return domain.ErrUserBlocked
+	}
+	return s.sendEmailCode(ctx, req.Email)
+}
+
+func (s *Service) VerifyEmail(ctx context.Context, req VerifyEmailRequest) (*TokenResponse, error) {
+	key := emailCodePrefix + req.Email
+	storedCode, err := s.rdb.Get(ctx, key).Result()
+	if err != nil {
+		return nil, fmt.Errorf("%w: code expired or not found", domain.ErrUnauthorized)
+	}
+	if storedCode != req.Code {
+		return nil, fmt.Errorf("%w: invalid code", domain.ErrUnauthorized)
+	}
+
+	s.rdb.Del(ctx, key)
+
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+	if user.IsBlocked {
+		return nil, domain.ErrUserBlocked
+	}
+
+	slog.Info("user logged in via email", "user_id", user.ID, "email", req.Email)
+	return s.generateTokens(user)
+}
+
+func (s *Service) sendEmailCode(ctx context.Context, emailAddr string) error {
+	code, err := generateSMSCode()
+	if err != nil {
+		return err
+	}
+
+	key := emailCodePrefix + emailAddr
+	if err := s.rdb.Set(ctx, key, code, smsCodeTTL).Err(); err != nil {
+		return fmt.Errorf("auth.service: save email code: %w", err)
+	}
+
+	if err := s.emailClient.SendVerificationCode(emailAddr, code); err != nil {
+		slog.Error("failed to send email code", "email", emailAddr, "err", err)
+		return fmt.Errorf("auth.service: send email: %w", err)
+	}
+
+	slog.Info("email code sent", "email", emailAddr)
+	return nil
 }

@@ -12,6 +12,14 @@ type Service struct {
 	repo *Repository
 }
 
+type ListResult struct {
+	Events     []*domain.Event
+	Total      int
+	Page       int
+	PageSize   int
+	TotalPages int
+}
+
 func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
@@ -170,4 +178,36 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 
 func (s *Service) ListAll(ctx context.Context) ([]*domain.Event, error) {
 	return s.repo.ListAll(ctx)
+}
+
+func (s *Service) ListWithPagination(ctx context.Context, f ListEventsFilter) (*ListResult, error) {
+	if f.Page < 1 {
+		f.Page = 1
+	}
+	if f.PageSize < 1 || f.PageSize > 100 {
+		f.PageSize = 12
+	}
+
+	events, err := s.repo.List(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.repo.Count(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := total / f.PageSize
+	if total%f.PageSize != 0 {
+		totalPages++
+	}
+
+	return &ListResult{
+		Events:     events,
+		Total:      total,
+		Page:       f.Page,
+		PageSize:   f.PageSize,
+		TotalPages: totalPages,
+	}, nil
 }

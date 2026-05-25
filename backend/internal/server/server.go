@@ -11,20 +11,24 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/sd0hni-psina/sport/internal/config"
+	"github.com/sd0hni-psina/sport/internal/middleware"
+	"github.com/sd0hni-psina/sport/internal/platform/email"
 )
 
 type Server struct {
-	httpServer *http.Server
-	cfg        *config.Config
-	pg         *pgxpool.Pool
-	rdb        *redis.Client
+	httpServer  *http.Server
+	cfg         *config.Config
+	pg          *pgxpool.Pool
+	rdb         *redis.Client
+	emailClient *email.Client
 }
 
-func New(cfg *config.Config, pg *pgxpool.Pool, rdb *redis.Client) *Server {
+func New(cfg *config.Config, pg *pgxpool.Pool, rdb *redis.Client, emailClient *email.Client) *Server {
 	return &Server{
-		cfg: cfg,
-		pg:  pg,
-		rdb: rdb,
+		cfg:         cfg,
+		pg:          pg,
+		rdb:         rdb,
+		emailClient: emailClient,
 	}
 }
 
@@ -36,6 +40,7 @@ func (s *Server) Run() error {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(requestLogger())
+	router.Use(middleware.GlobalRateLimit(s.rdb))
 
 	s.registerRoutes(router)
 

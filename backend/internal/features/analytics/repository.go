@@ -141,3 +141,61 @@ func (r *Repository) GetPublicCounters(ctx context.Context) (totalEvents int, to
 
 	return totalEvents, totalParticipants, nil
 }
+
+func (r *Repository) GetAdminSummary(ctx context.Context) (map[string]int, error) {
+	summary := map[string]int{}
+
+	queries := []struct {
+		key   string
+		query string
+	}{
+		{"total_events", `SELECT COUNT(*) FROM events`},
+		{"published_events", `SELECT COUNT(*) FROM events WHERE status = 'published'`},
+		{"total_applications", `SELECT COUNT(*) FROM applications`},
+		{"pending_applications", `SELECT COUNT(*) FROM applications WHERE status = 'pending'`},
+		{"total_users", `SELECT COUNT(*) FROM users`},
+		{"total_news", `SELECT COUNT(*) FROM posts`},
+		{"published_news", `SELECT COUNT(*) FROM posts WHERE published_at IS NOT NULL AND published_at <= NOW()`},
+	}
+
+	for _, q := range queries {
+		var count int
+		if err := r.db.QueryRow(ctx, q.query).Scan(&count); err != nil {
+			return nil, fmt.Errorf("analytics.repo: summary %s: %w", q.key, err)
+		}
+		summary[q.key] = count
+	}
+
+	return summary, nil
+}
+
+func (r *Repository) GetDailyActivity(ctx context.Context, days int) ([]map[string]interface{}, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			DATE(created_at) as date,
+			COUNT(*) as applications
+		FROM applications
+		WHERE created_at >= NOW() - ($1 || ' days')::INTERVAL
+		GROUP BY DATE(created_at)
+		ORDER BY date ASC`,
+		days,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("analytics.repo: daily activity: %w", err)
+	}
+	defer rows.Close()
+
+	var result []map[string]interface{}
+	for rows.Next() {
+		var date string
+		var count int
+		if err := rows.Scan(&date, &count); err != nil {
+			return nil, fmt.Errorf("analytics.repo: scan daily: %w", err)
+		}
+		result = append(result, map[string]interface{}{
+			"date":         date,
+			"applications": count,
+		})
+	}
+	return result, nil
+}
