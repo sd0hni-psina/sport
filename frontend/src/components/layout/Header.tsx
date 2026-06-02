@@ -7,6 +7,7 @@ const navLinks = [
   { to: '/events',    label: 'Мероприятия' },
   { to: '/news',      label: 'Новости'     },
   { to: '/sections',  label: 'Секции'      },
+  { to: '/gallery',   label: 'Галерея'     },
   { to: '/analytics', label: 'Статистика'  },
 ]
 

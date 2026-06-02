@@ -16,6 +16,8 @@ import { awardsApi } from '@/api/awards'
 import type { Award } from '@/types'
 import { PageMeta } from '@/components/shared/PageMeta'
 import { logout } from '@/lib/logout'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 
 export const Route = createFileRoute('/profile/')({
@@ -93,7 +95,7 @@ function ProfilePage() {
       setEditingProfile(false)
       toast.success('Профиль обновлён')
     },
-    onError: () => toast.error('Ошибка при обновлении профиля'),
+    onError: (err) => toast.error(getApiError(err)),
   })
 
   const addChildMutation = useMutation({
@@ -104,7 +106,7 @@ function ProfilePage() {
       setChildForm({ first_name: '', last_name: '', middle_name: '', birth_date: '' })
       toast.success('Ребёнок добавлен')
     },
-    onError: () => toast.error('Ошибка при добавлении'),
+    onError: (err) => toast.error(getApiError(err)),
   })
 
   const updateChildMutation = useMutation({
@@ -115,7 +117,7 @@ function ProfilePage() {
       setEditingChildId(null)
       toast.success('Данные ребёнка обновлены')
     },
-    onError: () => toast.error('Ошибка при обновлении'),
+    onError: (err) => toast.error(getApiError(err)),
   })
 
   const deleteChildMutation = useMutation({
@@ -124,7 +126,7 @@ function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['my-children'] })
       toast.success('Ребёнок удалён')
     },
-    onError: () => toast.error('Ошибка при удалении'),
+    onError: (err) => toast.error(getApiError(err)),
   })
 
   const cancelMutation = useMutation({
@@ -133,7 +135,7 @@ function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['my-applications'] })
       toast.success('Заявка отменена')
     },
-    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Ошибка при отмене'),
+    onError: (err: any) => toast.error(getApiError(err)),
   })
 
   async function handleLogout() {

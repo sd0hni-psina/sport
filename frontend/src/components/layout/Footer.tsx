@@ -26,7 +26,9 @@ export function Footer() {
               <a href="/events" className="hover:text-white transition-colors">Мероприятия</a>
               <a href="/news"   className="hover:text-white transition-colors">Новости</a>
               <a href="/sections" className="hover:text-white transition-colors">Секции</a>
+              <a href="/gallery" className="hover:text-white transition-colors">Галерея</a>
               <a href="/analytics" className="hover:text-white transition-colors">Статистика</a>
+              <a href="/suggest" className="hover:text-white transition-colors">Предложить мероприятие</a>
             </div>
           </div>
 

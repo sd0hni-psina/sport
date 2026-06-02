@@ -5,6 +5,8 @@ import { ArrowLeft, Eye, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 export const Route = createFileRoute('/admin/news/new')({
   component: AdminNewsNewPage,
@@ -51,7 +53,7 @@ function AdminNewsNewPage() {
       toast.success('Новость опубликована')
       navigate({ to: '/admin/news' })
     } catch (err: any) {
-      toast.error(err.response?.data?.error ?? 'Ошибка при создании')
+      toast.error(getApiError(err))
     } finally {
       setLoading(false)
     }

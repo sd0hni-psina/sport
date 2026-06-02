@@ -10,6 +10,8 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import type { Post } from '@/types'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 export const Route = createFileRoute('/admin/news/')({
   component: AdminNewsPage,
@@ -37,7 +39,8 @@ function AdminNewsPage() {
       toast.success('Новость удалена')
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error ?? 'Ошибка при удалении')
+      toast.error(getApiError(err))
+
     },
   })
 

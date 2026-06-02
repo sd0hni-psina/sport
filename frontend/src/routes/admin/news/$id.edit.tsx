@@ -7,6 +7,8 @@ import { ArrowLeft, Eye, Pencil } from 'lucide-react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { toast } from 'sonner'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 export const Route = createFileRoute('/admin/news/$id/edit')({
   component: AdminNewsEditPage,
@@ -113,7 +115,8 @@ function AdminNewsEditPage() {
       toast.success('Новость сохранена')
       navigate({ to: '/admin/news' })
     } catch (err: any) {
-      toast.error(err.response?.data?.error ?? 'Ошибка при сохранении')
+      toast.error(getApiError(err))
+
     } finally {
       setLoading(false)
     }

@@ -15,6 +15,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { EventMap } from '@/components/shared/EventMap'
 import { PageMeta } from '@/components/shared/PageMeta'
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 
 
@@ -84,9 +86,30 @@ function EventPage() {
       toast.success('Заявка отменена')
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error ?? 'Ошибка при отмене')
+      toast.error(getApiError(err))
+
     },
   })
+
+  const volunteerMutation = useMutation({
+  mutationFn: () => applicationsApi.apply(Number(id), { is_volunteer: true }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['my-applications'] })
+    toast.success('Заявка волонтёра подана!')
+  },
+  onError: (err: any) => {
+    toast.error(getApiError(err))
+
+  },
+  })
+
+  const existingVolunteerApp = myApps?.data?.find(
+  (a: Application) =>
+    a.event_id === Number(id) &&
+    a.is_volunteer === true &&
+    a.status !== 'cancelled_by_user' &&
+    a.status !== 'cancelled_by_admin'
+)
 
   if (isLoading) {
     return (
@@ -214,6 +237,32 @@ function EventPage() {
           {/* Блок участия */}
           <div className="bg-white rounded-2xl p-6" style={{ border: '1px solid #E2E8F0' }}>
             <h2 className="font-bold mb-4" style={{ color: '#0D1F3C' }}>Участие</h2>
+
+            {/* Волонтёрство */}
+{isEventAvailable && !isEventPast && isAuth && !existingVolunteerApp && !existingApplication && (
+  <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F1F5F9' }}>
+    <button
+      onClick={() => volunteerMutation.mutate()}
+      disabled={volunteerMutation.isPending}
+      className="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+      style={{ background: '#FFF8E7', color: '#D97706', border: '1px solid #FDE68A' }}
+    >
+      {volunteerMutation.isPending ? 'Отправка...' : '🙋 Стать волонтёром'}
+    </button>
+    <p className="text-xs mt-2 text-center" style={{ color: '#94A3B8' }}>
+      Помоги организовать мероприятие
+    </p>
+  </div>
+)}
+
+{existingVolunteerApp && (
+  <div
+    className="mt-3 pt-3 flex items-center gap-2 justify-center text-sm font-medium"
+    style={{ borderTop: '1px solid #F1F5F9', color: '#D97706' }}
+  >
+    🙋 Вы записаны как волонтёр
+  </div>
+)}
 
             {/* Возраст */}
             <p className="text-xs mb-4" style={{ color: '#94A3B8' }}>

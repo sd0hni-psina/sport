@@ -13,6 +13,8 @@ import type { Application, Event, User } from '@/types'
 import { awardsApi } from '@/api/awards'
 import { exportToCSV } from '@/lib/export-csv'
 import { Download, X } from 'lucide-react' 
+import { getApiError } from '@/lib/handle-api-error'
+
 
 export const Route = createFileRoute('/admin/applications/')({
   component: AdminApplicationsPage,
@@ -93,7 +95,8 @@ function AdminApplicationsPage() {
       toast.success('Статус обновлён')
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error ?? 'Ошибка при обновлении')
+      toast.error(getApiError(err))
+
     },
   })
 
@@ -106,7 +109,8 @@ function AdminApplicationsPage() {
       toast.success('Награда выдана!')
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error ?? 'Ошибка при выдаче награды')
+      toast.error(getApiError(err))
+
     },
   })
 

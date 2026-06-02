@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, redirect, useRouterState } from '@tansta
 import { authStore } from '@/store/auth'
 import {
   LayoutDashboard, Calendar, FileText,
-  Users, ClipboardList, LogOut, Trophy, Menu, X
+  Users, ClipboardList, LogOut, Trophy, Menu, X, Lightbulb
 } from 'lucide-react'
 import { useState } from 'react'
 import { logout } from '@/lib/logout'
@@ -27,6 +27,7 @@ const sideLinks = [
   { to: '/admin/applications',  label: 'Заявки',        icon: ClipboardList   },
   { to: '/admin/news',          label: 'Новости',       icon: FileText        },
   { to: '/admin/users',         label: 'Пользователи',  icon: Users           },
+  { to: '/admin/suggestions',   label: 'Предложения',   icon: Lightbulb       },
 ]
 
 function AdminLayout() {

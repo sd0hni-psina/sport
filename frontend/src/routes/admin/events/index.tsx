@@ -10,6 +10,8 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import type { Event } from '@/types'
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 export const Route = createFileRoute('/admin/events/')({
   component: AdminEventsPage,
@@ -126,7 +128,7 @@ function AdminEventsPage() {
       toast.success(`Статус изменён на "${label}"`)
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error ?? 'Ошибка при смене статуса')
+      toast.error(getApiError(err))
     },
   })
 

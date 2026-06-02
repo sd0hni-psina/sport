@@ -10,6 +10,8 @@ import { Skeleton } from '@/components/shared/Skeleton'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
 import type { User, Application } from '@/types'
+import { getApiError } from '@/lib/handle-api-error'
+
 
 export const Route = createFileRoute('/admin/users/')({
   component: AdminUsersPage,
@@ -42,7 +44,7 @@ function AdminUsersPage() {
       }
       toast.success(vars.block ? 'Пользователь заблокирован' : 'Пользователь разблокирован')
     },
-    onError: (err: any) => toast.error(err.response?.data?.error ?? 'Ошибка'),
+    onError: (err: any) => toast.error(getApiError(err)),
   })
 
   const users: User[] = (data?.data ?? []).filter((u: User) => {

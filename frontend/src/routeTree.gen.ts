@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuggestRouteImport } from './routes/suggest'
 import { Route as SectionsRouteImport } from './routes/sections'
+import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as R404RouteImport } from './routes/$404'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -18,11 +20,13 @@ import { Route as ProfileIndexRouteImport } from './routes/profile/index'
 import { Route as NewsIndexRouteImport } from './routes/news/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as SectionsIdRouteImport } from './routes/sections/$id'
 import { Route as ProfileUpcomingRouteImport } from './routes/profile/upcoming'
 import { Route as NewsIdRouteImport } from './routes/news/$id'
 import { Route as EventsIdRouteImport } from './routes/events/$id'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminNewsIndexRouteImport } from './routes/admin/news/index'
 import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
@@ -32,9 +36,19 @@ import { Route as AdminEventsNewRouteImport } from './routes/admin/events/new'
 import { Route as AdminNewsIdEditRouteImport } from './routes/admin/news/$id.edit'
 import { Route as AdminEventsIdEditRouteImport } from './routes/admin/events/$id.edit'
 
+const SuggestRoute = SuggestRouteImport.update({
+  id: '/suggest',
+  path: '/suggest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SectionsRoute = SectionsRouteImport.update({
   id: '/sections',
   path: '/sections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -77,6 +91,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const SectionsIdRoute = SectionsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SectionsRoute,
+} as any)
 const ProfileUpcomingRoute = ProfileUpcomingRouteImport.update({
   id: '/profile/upcoming',
   path: '/profile/upcoming',
@@ -101,6 +120,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
+  id: '/suggestions',
+  path: '/suggestions',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   id: '/users/',
@@ -148,12 +172,16 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/$404': typeof R404Route
   '/analytics': typeof AnalyticsRoute
-  '/sections': typeof SectionsRoute
+  '/gallery': typeof GalleryRoute
+  '/sections': typeof SectionsRouteWithChildren
+  '/suggest': typeof SuggestRoute
+  '/admin/suggestions': typeof AdminSuggestionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
   '/profile/upcoming': typeof ProfileUpcomingRoute
+  '/sections/$id': typeof SectionsIdRoute
   '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/news/': typeof NewsIndexRoute
@@ -171,12 +199,16 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$404': typeof R404Route
   '/analytics': typeof AnalyticsRoute
-  '/sections': typeof SectionsRoute
+  '/gallery': typeof GalleryRoute
+  '/sections': typeof SectionsRouteWithChildren
+  '/suggest': typeof SuggestRoute
+  '/admin/suggestions': typeof AdminSuggestionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
   '/profile/upcoming': typeof ProfileUpcomingRoute
+  '/sections/$id': typeof SectionsIdRoute
   '/admin': typeof AdminIndexRoute
   '/events': typeof EventsIndexRoute
   '/news': typeof NewsIndexRoute
@@ -196,12 +228,16 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/$404': typeof R404Route
   '/analytics': typeof AnalyticsRoute
-  '/sections': typeof SectionsRoute
+  '/gallery': typeof GalleryRoute
+  '/sections': typeof SectionsRouteWithChildren
+  '/suggest': typeof SuggestRoute
+  '/admin/suggestions': typeof AdminSuggestionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
   '/profile/upcoming': typeof ProfileUpcomingRoute
+  '/sections/$id': typeof SectionsIdRoute
   '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/news/': typeof NewsIndexRoute
@@ -222,12 +258,16 @@ export interface FileRouteTypes {
     | '/admin'
     | '/$404'
     | '/analytics'
+    | '/gallery'
     | '/sections'
+    | '/suggest'
+    | '/admin/suggestions'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
     | '/profile/upcoming'
+    | '/sections/$id'
     | '/admin/'
     | '/events/'
     | '/news/'
@@ -245,12 +285,16 @@ export interface FileRouteTypes {
     | '/'
     | '/$404'
     | '/analytics'
+    | '/gallery'
     | '/sections'
+    | '/suggest'
+    | '/admin/suggestions'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
     | '/profile/upcoming'
+    | '/sections/$id'
     | '/admin'
     | '/events'
     | '/news'
@@ -269,12 +313,16 @@ export interface FileRouteTypes {
     | '/admin'
     | '/$404'
     | '/analytics'
+    | '/gallery'
     | '/sections'
+    | '/suggest'
+    | '/admin/suggestions'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
     | '/profile/upcoming'
+    | '/sections/$id'
     | '/admin/'
     | '/events/'
     | '/news/'
@@ -294,7 +342,9 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   R404Route: typeof R404Route
   AnalyticsRoute: typeof AnalyticsRoute
-  SectionsRoute: typeof SectionsRoute
+  GalleryRoute: typeof GalleryRoute
+  SectionsRoute: typeof SectionsRouteWithChildren
+  SuggestRoute: typeof SuggestRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   EventsIdRoute: typeof EventsIdRoute
@@ -307,11 +357,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/suggest': {
+      id: '/suggest'
+      path: '/suggest'
+      fullPath: '/suggest'
+      preLoaderRoute: typeof SuggestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sections': {
       id: '/sections'
       path: '/sections'
       fullPath: '/sections'
       preLoaderRoute: typeof SectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -370,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/sections/$id': {
+      id: '/sections/$id'
+      path: '/$id'
+      fullPath: '/sections/$id'
+      preLoaderRoute: typeof SectionsIdRouteImport
+      parentRoute: typeof SectionsRoute
+    }
     '/profile/upcoming': {
       id: '/profile/upcoming'
       path: '/profile/upcoming'
@@ -404,6 +475,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/suggestions': {
+      id: '/admin/suggestions'
+      path: '/suggestions'
+      fullPath: '/admin/suggestions'
+      preLoaderRoute: typeof AdminSuggestionsRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/users/': {
       id: '/admin/users/'
@@ -465,6 +543,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
+  AdminSuggestionsRoute: typeof AdminSuggestionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminEventsNewRoute: typeof AdminEventsNewRoute
   AdminNewsNewRoute: typeof AdminNewsNewRoute
@@ -477,6 +556,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminSuggestionsRoute: AdminSuggestionsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminEventsNewRoute: AdminEventsNewRoute,
   AdminNewsNewRoute: AdminNewsNewRoute,
@@ -492,12 +572,26 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
   AdminRouteRouteChildren,
 )
 
+interface SectionsRouteChildren {
+  SectionsIdRoute: typeof SectionsIdRoute
+}
+
+const SectionsRouteChildren: SectionsRouteChildren = {
+  SectionsIdRoute: SectionsIdRoute,
+}
+
+const SectionsRouteWithChildren = SectionsRoute._addFileChildren(
+  SectionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   R404Route: R404Route,
   AnalyticsRoute: AnalyticsRoute,
-  SectionsRoute: SectionsRoute,
+  GalleryRoute: GalleryRoute,
+  SectionsRoute: SectionsRouteWithChildren,
+  SuggestRoute: SuggestRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   EventsIdRoute: EventsIdRoute,

@@ -2,10 +2,9 @@ import { createFileRoute, Link, useNavigate, useRouterState, redirect } from '@t
 import { useState } from 'react'
 import { authApi } from '@/api/auth'
 import { authStore } from '@/store/auth'
-import { Trophy, ArrowRight, KeyRound } from 'lucide-react'
+import { Trophy, ArrowRight, KeyRound, Phone, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageMeta } from '@/components/shared/PageMeta'
-
 
 export const Route = createFileRoute('/auth/register')({
   beforeLoad: () => {
@@ -16,6 +15,9 @@ export const Route = createFileRoute('/auth/register')({
   component: RegisterPage,
 })
 
+type Method = 'phone' | 'email'
+type Step = 'form' | 'code'
+
 const inputClass = "w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 const inputStyle = { border: '1px solid #E2E8F0', color: '#0D1F3C' }
 const labelClass = "block text-xs font-semibold mb-1.5"
@@ -25,62 +27,64 @@ function RegisterPage() {
   const navigate = useNavigate()
   const routerState = useRouterState()
   const from = routerState.location.state?.from as string | undefined
-  const [step, setStep] = useState<'form' | 'code'>('form')
-  const [phone, setPhone] = useState('')
+
+  const [method, setMethod] = useState<Method>('phone')
+  const [step, setStep] = useState<Step>('form')
+  const [contact, setContact] = useState('') // phone or email
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
 
   const [form, setForm] = useState({
     first_name: '', last_name: '', middle_name: '',
-    phone_number: '', city: 'Атырау', birth_date: '',
+    phone_number: '', email: '',
+    city: 'Атырау', birth_date: '',
   })
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  function validateBirthDate(date: string): string | null {
-  const d = new Date(date)
-  const now = new Date()
-  if (isNaN(d.getTime())) return 'Введите корректную дату рождения'
-  if (d > now) return 'Дата рождения не может быть в будущем'
-  const age = now.getFullYear() - d.getFullYear()
-  if (age > 120) return 'Введите корректную дату рождения'
-  return null
-}
-
   function validatePhone(phone: string): string | null {
-  const cleaned = phone.replace(/\s/g, '')
-  if (!/^\+?[0-9]{10,13}$/.test(cleaned)) {
-    return 'Введите корректный номер телефона (например +77001234567)'
-  }
-  return null
+    const cleaned = phone.replace(/\s/g, '')
+    if (!/^\+?[0-9]{10,13}$/.test(cleaned)) {
+      return 'Введите корректный номер телефона (например +77001234567)'
+    }
+    return null
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    const phoneError = validatePhone(form.phone_number)
-    const birthError = validateBirthDate(form.birth_date)
-if (birthError) {
-  toast.error(birthError)
-  setLoading(false)
-  return
-}
-if (phoneError) {
-  toast.error(phoneError)
-  setLoading(false)
-  return
-}
 
     try {
-      await authApi.register({
-        ...form,
-        middle_name: form.middle_name || undefined,
-      })
-      setPhone(form.phone_number)
+      if (method === 'phone') {
+        const phoneError = validatePhone(form.phone_number)
+        if (phoneError) {
+          toast.error(phoneError)
+          return
+        }
+        await authApi.register({
+          first_name:   form.first_name,
+          last_name:    form.last_name,
+          middle_name:  form.middle_name || undefined,
+          phone_number: form.phone_number,
+          city:         form.city,
+          birth_date:   form.birth_date,
+        })
+        setContact(form.phone_number)
+      } else {
+        await authApi.registerEmail({
+          first_name:  form.first_name,
+          last_name:   form.last_name,
+          middle_name: form.middle_name || undefined,
+          email:       form.email,
+          city:        form.city,
+          birth_date:  form.birth_date,
+        })
+        setContact(form.email)
+      }
       setStep('code')
-      toast.success('SMS-код отправлен')
+      toast.success(method === 'phone' ? 'SMS-код отправлен' : 'Код отправлен на email')
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Ошибка регистрации')
     } finally {
@@ -92,10 +96,17 @@ if (phoneError) {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await authApi.verify({ phone_number: phone, code })
-      authStore.setTokens(data.access_token, data.refresh_token)
+      let tokens
+      if (method === 'phone') {
+        const { data } = await authApi.verify({ phone_number: contact, code })
+        tokens = data
+      } else {
+        const { data } = await authApi.verifyEmail({ email: contact, code })
+        tokens = data
+      }
+      authStore.setTokens(tokens.access_token, tokens.refresh_token)
       toast.success('Добро пожаловать!')
-      navigate({ to: from ?? '/' })
+      navigate({ to: (from ?? '/') as any })
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Неверный код')
     } finally {
@@ -104,15 +115,11 @@ if (phoneError) {
   }
 
   return (
-    <>
-    <PageMeta title="Регистрация" />
     <div className="min-h-[85vh] flex">
+      <PageMeta title="Регистрация" />
 
       {/* Левая панель */}
-      <div
-        className="hidden lg:flex flex-col justify-between w-2/5 p-10"
-        style={{ background: '#0D1F3C' }}
-      >
+      <div className="hidden lg:flex flex-col justify-between w-2/5 p-10" style={{ background: '#0D1F3C' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#F5A623' }}>
             <Trophy size={18} color="#0D1F3C" />
@@ -122,7 +129,6 @@ if (phoneError) {
             <p className="text-xs" style={{ color: '#7A8FA8' }}>Акимат города</p>
           </div>
         </div>
-
         <div>
           <div
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full mb-6"
@@ -138,7 +144,6 @@ if (phoneError) {
             Зарегистрируйся и получи доступ ко всем мероприятиям, секциям и наградам
           </p>
         </div>
-
         <div className="flex flex-col gap-3">
           {[
             '✓ Запись на мероприятия онлайн',
@@ -165,14 +170,49 @@ if (phoneError) {
           <h1 className="text-2xl font-bold mb-1" style={{ color: '#0D1F3C' }}>
             {step === 'form' ? 'Регистрация' : 'Подтверждение'}
           </h1>
-          <p className="text-sm mb-8" style={{ color: '#94A3B8' }}>
+          <p className="text-sm mb-6" style={{ color: '#94A3B8' }}>
             {step === 'form'
               ? 'Заполните данные для создания аккаунта'
-              : `Код отправлен на ${phone}`}
+              : method === 'phone'
+                ? `Код отправлен на ${contact}`
+                : `Код отправлен на ${contact}`
+            }
           </p>
 
           {step === 'form' ? (
             <form onSubmit={handleRegister} className="flex flex-col gap-4">
+
+              {/* Переключатель метода */}
+              <div
+                className="flex rounded-xl p-1"
+                style={{ background: '#F1F5F9' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setMethod('phone')}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all"
+                  style={method === 'phone'
+                    ? { background: '#fff', color: '#0D1F3C', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }
+                    : { color: '#94A3B8' }
+                  }
+                >
+                  <Phone size={14} />
+                  Телефон
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMethod('email')}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all"
+                  style={method === 'email'
+                    ? { background: '#fff', color: '#0D1F3C', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }
+                    : { color: '#94A3B8' }
+                  }
+                >
+                  <Mail size={14} />
+                  Email
+                </button>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass} style={labelStyle}>Имя *</label>
@@ -191,10 +231,17 @@ if (phoneError) {
                 <input name="middle_name" value={form.middle_name} onChange={handleChange} placeholder="Сериккалиевич" className={inputClass} style={inputStyle} />
               </div>
 
-              <div>
-                <label className={labelClass} style={labelStyle}>Телефон *</label>
-                <input name="phone_number" type="tel" value={form.phone_number} onChange={handleChange} required placeholder="+77001234567" className={inputClass} style={inputStyle} />
-              </div>
+              {method === 'phone' ? (
+                <div>
+                  <label className={labelClass} style={labelStyle}>Телефон *</label>
+                  <input name="phone_number" type="tel" value={form.phone_number} onChange={handleChange} required placeholder="+77001234567" className={inputClass} style={inputStyle} />
+                </div>
+              ) : (
+                <div>
+                  <label className={labelClass} style={labelStyle}>Email *</label>
+                  <input name="email" type="email" value={form.email} onChange={handleChange} required placeholder="example@email.com" className={inputClass} style={inputStyle} />
+                </div>
+              )}
 
               <div>
                 <label className={labelClass} style={labelStyle}>Город *</label>
@@ -219,7 +266,9 @@ if (phoneError) {
           ) : (
             <form onSubmit={handleVerify} className="flex flex-col gap-4">
               <div>
-                <label className={labelClass} style={labelStyle}>SMS-код</label>
+                <label className={labelClass} style={labelStyle}>
+                  {method === 'phone' ? 'SMS-код' : 'Код из письма'}
+                </label>
                 <div className="relative">
                   <KeyRound size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#94A3B8' }} />
                   <input
@@ -265,6 +314,5 @@ if (phoneError) {
         </div>
       </div>
     </div>
-    </>
   )
 }
