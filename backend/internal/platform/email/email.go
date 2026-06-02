@@ -2,7 +2,6 @@ package email
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/resend/resend-go/v2"
 )
@@ -51,11 +50,7 @@ func (c *Client) SendVerificationCode(to, code string) error {
 
 	_, err := c.client.Emails.Send(params)
 	if err != nil {
-		log.Printf("SENDING EMAIL TO: %s", to)
-		log.Printf("FROM: %s", c.from)
-		log.Printf("CODE: %s", code)
-		log.Printf("RESEND ERROR: %+v", err)
-		return fmt.Errorf("email send failed: %w", err)
+		return fmt.Errorf("email: send verification: %w", err)
 	}
 	return nil
 }

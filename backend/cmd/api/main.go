@@ -38,10 +38,10 @@ func main() {
 		os.Exit(1)
 	}
 	defer rdb.Close()
-
+	
 	emailClient := email.New(cfg.Resend.APIKey, cfg.Resend.From)
 	slog.Info("email client initialized", "from", cfg.Resend.From)
-
+	
 	srv := server.New(cfg, pg, rdb, emailClient)
 
 	go func() {

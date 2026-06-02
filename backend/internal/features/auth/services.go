@@ -34,7 +34,6 @@ func NewService(repo *Repository, rdb *redis.Client, cfg config.JWTConfig, email
 	return &Service{repo: repo, rdb: rdb, cfg: cfg, emailClient: emailClient}
 }
 
-// Register — сохраняет пользователя и отправляет SMS-код
 func (s *Service) Register(ctx context.Context, req RegisterRequest) error {
 	exists, err := s.repo.UserExistsByPhone(ctx, req.PhoneNumber)
 	if err != nil {
@@ -249,17 +248,16 @@ func (s *Service) RegisterEmail(ctx context.Context, req RegisterEmailRequest) e
 		middleName = &req.MiddleName
 	}
 
-	email := req.Email
+	emailVal := req.Email
 	u := &domain.User{
-		FirstName:   req.FirstName,
-		LastName:    req.LastName,
-		MiddleName:  middleName,
-		PhoneNumber: "",
-		Email:       &email,
-		City:        req.City,
-		BirthDate:   birthDate,
-		Role:        domain.UserRoleUser,
-		Reputation:  100,
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
+		MiddleName: middleName,
+		Email:      &emailVal,
+		City:       req.City,
+		BirthDate:  birthDate,
+		Role:       domain.UserRoleUser,
+		Reputation: 100,
 	}
 
 	if _, err := s.repo.CreateUserWithEmail(ctx, u); err != nil {

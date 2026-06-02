@@ -25,8 +25,9 @@ func (r *Repository) GetUserByID(ctx context.Context, id int64) (*domain.User, e
 		FROM users WHERE id = $1`
 
 	u := &domain.User{}
+	var phoneVal *string
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber, &u.Email,
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &phoneVal, &u.Email,
 		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 	)
@@ -35,6 +36,9 @@ func (r *Repository) GetUserByID(ctx context.Context, id int64) (*domain.User, e
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("auth.repo: get user by id: %w", err)
+	}
+	if phoneVal != nil {
+		u.PhoneNumber = *phoneVal
 	}
 	return u, nil
 }
@@ -64,8 +68,9 @@ func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*domain.
 		WHERE phone_number = $1`
 
 	u := &domain.User{}
+	var phoneVal *string
 	err := r.db.QueryRow(ctx, query, phone).Scan(
-		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber, &u.Email,
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &phoneVal, &u.Email,
 		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 	)
@@ -74,6 +79,9 @@ func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*domain.
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("auth.repo: get user by phone: %w", err)
+	}
+	if phoneVal != nil {
+		u.PhoneNumber = *phoneVal
 	}
 	return u, nil
 }
@@ -92,12 +100,12 @@ func (r *Repository) UserExistsByPhone(ctx context.Context, phone string) (bool,
 func (r *Repository) CreateUserWithEmail(ctx context.Context, u *domain.User) (int64, error) {
 	query := `
 		INSERT INTO users (first_name, last_name, middle_name, phone_number, email, city, address, birth_date, role, reputation)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		VALUES ($1, $2, $3, NULL, $4, $5, $6, $7, $8, $9)
 		RETURNING id`
 
 	var id int64
 	err := r.db.QueryRow(ctx, query,
-		u.FirstName, u.LastName, u.MiddleName, u.PhoneNumber, u.Email,
+		u.FirstName, u.LastName, u.MiddleName, u.Email,
 		u.City, u.Address, u.BirthDate, u.Role, u.Reputation,
 	).Scan(&id)
 	if err != nil {
@@ -106,7 +114,7 @@ func (r *Repository) CreateUserWithEmail(ctx context.Context, u *domain.User) (i
 	return id, nil
 }
 
-func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *Repository) GetUserByEmail(ctx context.Context, emailAddr string) (*domain.User, error) {
 	query := `
 		SELECT id, first_name, last_name, middle_name, phone_number, email,
 		       city, address, birth_date, role, reputation, is_blocked, created_at, updated_at
@@ -114,8 +122,9 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.
 		WHERE email = $1`
 
 	u := &domain.User{}
-	err := r.db.QueryRow(ctx, query, email).Scan(
-		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber, &u.Email,
+	var phone *string
+	err := r.db.QueryRow(ctx, query, emailAddr).Scan(
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &phone, &u.Email,
 		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 	)
@@ -124,6 +133,9 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("auth.repo: get user by email: %w", err)
+	}
+	if phone != nil {
+		u.PhoneNumber = *phone
 	}
 	return u, nil
 }

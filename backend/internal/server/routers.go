@@ -79,12 +79,12 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			a.POST("/logout", authHandler.Logout)
 
 			a.POST("/register-email",
-				authHandler.RegisterEmail,
 				middleware.EmailByIP(s.rdb),
+				authHandler.RegisterEmail,
 			)
 			a.POST("/login-email",
-				authHandler.LoginEmail,
 				middleware.EmailByIP(s.rdb),
+				authHandler.LoginEmail,
 			)
 			a.POST("/verify-email", authHandler.VerifyEmail)
 		}

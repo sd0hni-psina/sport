@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -105,7 +104,6 @@ func (h *Handler) RegisterEmail(c *gin.Context) {
 	var req RegisterEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		log.Printf("HANDLER ERROR: %+v", err) //<-------
 		return
 	}
 
