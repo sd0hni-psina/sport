@@ -5,6 +5,7 @@ import { authStore } from '@/store/auth'
 import { Trophy, ArrowRight, KeyRound, Phone, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageMeta } from '@/components/shared/PageMeta'
+import { PhoneInput } from '@/components/shared/PhoneInput'
 
 export const Route = createFileRoute('/auth/register')({
   beforeLoad: () => {
@@ -31,6 +32,7 @@ function RegisterPage() {
   const [method, setMethod] = useState<Method>('phone')
   const [step, setStep] = useState<Step>('form')
   const [contact, setContact] = useState('') // phone or email
+  const [phoneFormatted, setPhoneFormatted] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -233,9 +235,16 @@ function RegisterPage() {
 
               {method === 'phone' ? (
                 <div>
-                  <label className={labelClass} style={labelStyle}>Телефон *</label>
-                  <input name="phone_number" type="tel" value={form.phone_number} onChange={handleChange} required placeholder="+77001234567" className={inputClass} style={inputStyle} />
-                </div>
+    <label className={labelClass} style={labelStyle}>Телефон *</label>
+    <PhoneInput
+      value={phoneFormatted}
+      onChange={val => {
+        setPhoneFormatted(val)
+        setForm(prev => ({ ...prev, phone_number: val.replace(/[\s\(\)\-]/g, '') }))
+      }}
+      required
+    />
+  </div>
               ) : (
                 <div>
                   <label className={labelClass} style={labelStyle}>Email *</label>

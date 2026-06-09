@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/api/client'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Plus, Pencil, Trash2, Eye, ChevronDown, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, ChevronDown, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Skeleton } from '@/components/shared/Skeleton'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -12,6 +12,7 @@ import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/lib/handle-api-error'
 
+const PAGE_SIZE = 20
 
 export const Route = createFileRoute('/admin/events/')({
   component: AdminEventsPage,
@@ -109,14 +110,20 @@ function StatusDropdown({ event, onStatusChange, loading }: {
 
 function AdminEventsPage() {
   const queryClient = useQueryClient()
+  const [page, setPage] = useState(1)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['admin-events'],
-    queryFn: () => apiClient.get<{ data: Event[] }>('/admin/events').then(r => r.data),
+    queryKey: ['admin-events', page, search],
+    queryFn: () => apiClient.get<{ data: Event[]; pagination: any }>(
+      `/admin/events?page=${page}&page_size=${PAGE_SIZE}&search=${search}`
+    ).then(r => r.data),
   })
+
+  const allEvents: Event[] = data?.data ?? []
+  const pagination = data?.pagination
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
@@ -146,22 +153,22 @@ function AdminEventsPage() {
     },
   })
 
-  const allEvents: Event[] = data?.data ?? []
   const counts = allEvents.reduce((acc, e) => {
     acc[e.status] = (acc[e.status] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
+
   const filteredByStatus = statusFilter
-  ? allEvents.filter(e => e.status === statusFilter)
-  : allEvents
+    ? allEvents.filter(e => e.status === statusFilter)
+    : allEvents
 
   const events = search
-  ? filteredByStatus.filter(e =>
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.sport_type.toLowerCase().includes(search.toLowerCase()) ||
-      e.location.toLowerCase().includes(search.toLowerCase())
-    )
-  : filteredByStatus
+    ? filteredByStatus.filter(e =>
+        e.name.toLowerCase().includes(search.toLowerCase()) ||
+        e.sport_type.toLowerCase().includes(search.toLowerCase()) ||
+        e.location.toLowerCase().includes(search.toLowerCase())
+      )
+    : filteredByStatus
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -210,17 +217,17 @@ function AdminEventsPage() {
       </div>
 
       {/* Поиск */}
-<div className="relative mb-3">
-  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#94A3B8' }} />
-  <input
-    type="text"
-    placeholder="Поиск по названию, виду спорта, месту..."
-    value={search}
-    onChange={e => setSearch(e.target.value)}
-    className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-    style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
-  />
-</div>
+      <div className="relative mb-3">
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#94A3B8' }} />
+        <input
+          type="text"
+          placeholder="Поиск по названию, виду спорта, месту..."
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1) }}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          style={{ border: '1px solid #E2E8F0', color: '#0D1F3C' }}
+        />
+      </div>
 
       {isError ? (
         <ErrorState onRetry={refetch} />
@@ -245,75 +252,102 @@ function AdminEventsPage() {
           }
         />
       ) : (
-        <div className="flex flex-col gap-3">
-          {events.map((event: Event) => (
-            <div
-              key={event.id}
-              className="bg-white rounded-2xl p-5 flex items-center gap-4"
-              style={{ border: '1px solid #E2E8F0' }}
-            >
+        <>
+          <div className="flex flex-col gap-3">
+            {events.map((event: Event) => (
               <div
-                className="w-1 h-12 rounded-full shrink-0"
-                style={{
-                  background:
-                    event.status === 'published' ? '#059669' :
-                    event.status === 'cancelled' ? '#DC2626' :
-                    event.status === 'completed' ? '#2563EB' : '#94A3B8'
-                }}
-              />
-
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate mb-1" style={{ color: '#0D1F3C' }}>
-                  {event.name}
-                </p>
-                <div className="flex items-center gap-3 text-xs" style={{ color: '#94A3B8' }}>
-                  <span>{event.sport_type}</span>
-                  <span>·</span>
-                  <span>{format(new Date(event.time_start), 'd MMM yyyy, HH:mm', { locale: ru })}</span>
-                  <span>·</span>
-                  <span className="truncate">{event.location}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <StatusDropdown
-                  event={event}
-                  onStatusChange={(id, status) => statusMutation.mutate({ id, status })}
-                  loading={statusMutation.isPending}
+                key={event.id}
+                className="bg-white rounded-2xl p-5 flex items-center gap-4"
+                style={{ border: '1px solid #E2E8F0' }}
+              >
+                <div
+                  className="w-1 h-12 rounded-full shrink-0"
+                  style={{
+                    background:
+                      event.status === 'published' ? '#059669' :
+                      event.status === 'cancelled' ? '#DC2626' :
+                      event.status === 'completed' ? '#2563EB' : '#94A3B8'
+                  }}
                 />
 
-                <Link
-                  to="/events/$id"
-                  params={{ id: String(event.id) }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: '#F1F5F9', color: '#64748B' }}
-                  title="Просмотр"
-                >
-                  <Eye size={14} />
-                </Link>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate mb-1" style={{ color: '#0D1F3C' }}>
+                    {event.name}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs" style={{ color: '#94A3B8' }}>
+                    <span>{event.sport_type}</span>
+                    <span>·</span>
+                    <span>{format(new Date(event.time_start), 'd MMM yyyy, HH:mm', { locale: ru })}</span>
+                    <span>·</span>
+                    <span className="truncate">{event.location}</span>
+                  </div>
+                </div>
 
-                <Link
-                  to="/admin/events/$id/edit"
-                  params={{ id: String(event.id) }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: '#EFF6FF', color: '#2563EB' }}
-                  title="Редактировать"
-                >
-                  <Pencil size={14} />
-                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  <StatusDropdown
+                    event={event}
+                    onStatusChange={(id, status) => statusMutation.mutate({ id, status })}
+                    loading={statusMutation.isPending}
+                  />
 
-                <button
-                  onClick={() => setDeletingId(event.id)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: '#FEF2F2', color: '#DC2626' }}
-                  title="Удалить"
-                >
-                  <Trash2 size={14} />
-                </button>
+                  <Link
+                    to="/events/$id"
+                    params={{ id: String(event.id) }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: '#F1F5F9', color: '#64748B' }}
+                    title="Просмотр"
+                  >
+                    <Eye size={14} />
+                  </Link>
+
+                  <Link
+                    to="/admin/events/$id/edit"
+                    params={{ id: String(event.id) }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: '#EFF6FF', color: '#2563EB' }}
+                    title="Редактировать"
+                  >
+                    <Pencil size={14} />
+                  </Link>
+
+                  <button
+                    onClick={() => setDeletingId(event.id)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: '#FEF2F2', color: '#DC2626' }}
+                    title="Удалить"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Добавляем пагинацию после списка */}
+          {pagination && pagination.total_pages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-40"
+                style={{ background: '#F1F5F9', color: '#64748B' }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="text-sm font-medium" style={{ color: '#64748B' }}>
+                {page} / {pagination.total_pages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(pagination.total_pages, p + 1))}
+                disabled={page === pagination.total_pages}
+                className="w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-40"
+                style={{ background: '#F1F5F9', color: '#64748B' }}
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {deletingId !== null && (

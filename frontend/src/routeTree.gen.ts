@@ -22,11 +22,13 @@ import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as SectionsIdRouteImport } from './routes/sections/$id'
 import { Route as ProfileUpcomingRouteImport } from './routes/profile/upcoming'
+import { Route as ProfileAwardsRouteImport } from './routes/profile/awards'
 import { Route as NewsIdRouteImport } from './routes/news/$id'
 import { Route as EventsIdRouteImport } from './routes/events/$id'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
+import { Route as AdminGalleryRouteImport } from './routes/admin/gallery'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminNewsIndexRouteImport } from './routes/admin/news/index'
 import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
@@ -101,6 +103,11 @@ const ProfileUpcomingRoute = ProfileUpcomingRouteImport.update({
   path: '/profile/upcoming',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileAwardsRoute = ProfileAwardsRouteImport.update({
+  id: '/profile/awards',
+  path: '/profile/awards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NewsIdRoute = NewsIdRouteImport.update({
   id: '/news/$id',
   path: '/news/$id',
@@ -124,6 +131,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
   id: '/suggestions',
   path: '/suggestions',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminGalleryRoute = AdminGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
@@ -175,11 +187,13 @@ export interface FileRoutesByFullPath {
   '/gallery': typeof GalleryRoute
   '/sections': typeof SectionsRouteWithChildren
   '/suggest': typeof SuggestRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/profile/awards': typeof ProfileAwardsRoute
   '/profile/upcoming': typeof ProfileUpcomingRoute
   '/sections/$id': typeof SectionsIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -202,11 +216,13 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryRoute
   '/sections': typeof SectionsRouteWithChildren
   '/suggest': typeof SuggestRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/profile/awards': typeof ProfileAwardsRoute
   '/profile/upcoming': typeof ProfileUpcomingRoute
   '/sections/$id': typeof SectionsIdRoute
   '/admin': typeof AdminIndexRoute
@@ -231,11 +247,13 @@ export interface FileRoutesById {
   '/gallery': typeof GalleryRoute
   '/sections': typeof SectionsRouteWithChildren
   '/suggest': typeof SuggestRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/events/$id': typeof EventsIdRoute
   '/news/$id': typeof NewsIdRoute
+  '/profile/awards': typeof ProfileAwardsRoute
   '/profile/upcoming': typeof ProfileUpcomingRoute
   '/sections/$id': typeof SectionsIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -261,11 +279,13 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/sections'
     | '/suggest'
+    | '/admin/gallery'
     | '/admin/suggestions'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/profile/awards'
     | '/profile/upcoming'
     | '/sections/$id'
     | '/admin/'
@@ -288,11 +308,13 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/sections'
     | '/suggest'
+    | '/admin/gallery'
     | '/admin/suggestions'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/profile/awards'
     | '/profile/upcoming'
     | '/sections/$id'
     | '/admin'
@@ -316,11 +338,13 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/sections'
     | '/suggest'
+    | '/admin/gallery'
     | '/admin/suggestions'
     | '/auth/login'
     | '/auth/register'
     | '/events/$id'
     | '/news/$id'
+    | '/profile/awards'
     | '/profile/upcoming'
     | '/sections/$id'
     | '/admin/'
@@ -349,6 +373,7 @@ export interface RootRouteChildren {
   AuthRegisterRoute: typeof AuthRegisterRoute
   EventsIdRoute: typeof EventsIdRoute
   NewsIdRoute: typeof NewsIdRoute
+  ProfileAwardsRoute: typeof ProfileAwardsRoute
   ProfileUpcomingRoute: typeof ProfileUpcomingRoute
   EventsIndexRoute: typeof EventsIndexRoute
   NewsIndexRoute: typeof NewsIndexRoute
@@ -448,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileUpcomingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/awards': {
+      id: '/profile/awards'
+      path: '/profile/awards'
+      fullPath: '/profile/awards'
+      preLoaderRoute: typeof ProfileAwardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/news/$id': {
       id: '/news/$id'
       path: '/news/$id'
@@ -481,6 +513,13 @@ declare module '@tanstack/react-router' {
       path: '/suggestions'
       fullPath: '/admin/suggestions'
       preLoaderRoute: typeof AdminSuggestionsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/gallery': {
+      id: '/admin/gallery'
+      path: '/gallery'
+      fullPath: '/admin/gallery'
+      preLoaderRoute: typeof AdminGalleryRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/users/': {
@@ -543,6 +582,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
+  AdminGalleryRoute: typeof AdminGalleryRoute
   AdminSuggestionsRoute: typeof AdminSuggestionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminEventsNewRoute: typeof AdminEventsNewRoute
@@ -556,6 +596,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminGalleryRoute: AdminGalleryRoute,
   AdminSuggestionsRoute: AdminSuggestionsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminEventsNewRoute: AdminEventsNewRoute,
@@ -596,6 +637,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRegisterRoute: AuthRegisterRoute,
   EventsIdRoute: EventsIdRoute,
   NewsIdRoute: NewsIdRoute,
+  ProfileAwardsRoute: ProfileAwardsRoute,
   ProfileUpcomingRoute: ProfileUpcomingRoute,
   EventsIndexRoute: EventsIndexRoute,
   NewsIndexRoute: NewsIndexRoute,

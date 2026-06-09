@@ -2,12 +2,13 @@ import { createFileRoute, Outlet, Link, redirect, useRouterState } from '@tansta
 import { authStore } from '@/store/auth'
 import {
   LayoutDashboard, Calendar, FileText,
-  Users, ClipboardList, LogOut, Trophy, Menu, X, Lightbulb
+  Users, ClipboardList, LogOut, Trophy, Menu, X, Lightbulb, Image
 } from 'lucide-react'
 import { useState } from 'react'
 import { logout } from '@/lib/logout'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+
 
 export const Route = createFileRoute('/admin')({
   beforeLoad: () => {
@@ -26,6 +27,7 @@ const sideLinks = [
   { to: '/admin/events',        label: 'Мероприятия',   icon: Calendar        },
   { to: '/admin/applications',  label: 'Заявки',        icon: ClipboardList   },
   { to: '/admin/news',          label: 'Новости',       icon: FileText        },
+  { to: '/admin/gallery',       label: 'Галерея',       icon: Image           },
   { to: '/admin/users',         label: 'Пользователи',  icon: Users           },
   { to: '/admin/suggestions',   label: 'Предложения',   icon: Lightbulb       },
 ]
