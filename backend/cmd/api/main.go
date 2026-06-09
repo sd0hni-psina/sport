@@ -15,6 +15,7 @@ import (
 	"github.com/sd0hni-psina/sport/internal/platform/logger"
 	"github.com/sd0hni-psina/sport/internal/platform/postgres"
 	"github.com/sd0hni-psina/sport/internal/platform/redis"
+	"github.com/sd0hni-psina/sport/internal/platform/storage"
 	"github.com/sd0hni-psina/sport/internal/server"
 )
 
@@ -38,11 +39,23 @@ func main() {
 		os.Exit(1)
 	}
 	defer rdb.Close()
-	
+
 	emailClient := email.New(cfg.Resend.APIKey, cfg.Resend.From)
 	slog.Info("email client initialized", "from", cfg.Resend.From)
-	
-	srv := server.New(cfg, pg, rdb, emailClient)
+
+	storageClient, err := storage.NewCloudinary(
+		cfg.Cloudinary.CloudName,
+		cfg.Cloudinary.APIKey,
+		cfg.Cloudinary.APISecret,
+		"atyrau-sport",
+	)
+	if err != nil {
+		slog.Error("failed to init cloudinary", "err", err)
+		os.Exit(1)
+	}
+	slog.Info("cloudinary initialized", "cloud", cfg.Cloudinary.CloudName)
+
+	srv := server.New(cfg, pg, rdb, emailClient, storageClient)
 
 	go func() {
 		if err := srv.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {

@@ -14,6 +14,8 @@ import (
 	"github.com/sd0hni-psina/sport/internal/config"
 	"github.com/sd0hni-psina/sport/internal/middleware"
 	"github.com/sd0hni-psina/sport/internal/platform/email"
+	"github.com/sd0hni-psina/sport/internal/platform/storage"
+
 )
 
 type Server struct {
@@ -22,14 +24,16 @@ type Server struct {
 	pg          *pgxpool.Pool
 	rdb         *redis.Client
 	emailClient *email.Client
+	storage     *storage.CloudinaryClient
 }
 
-func New(cfg *config.Config, pg *pgxpool.Pool, rdb *redis.Client, emailClient *email.Client) *Server {
+func New(cfg *config.Config, pg *pgxpool.Pool, rdb *redis.Client, emailClient *email.Client, storage *storage.CloudinaryClient) *Server {
 	return &Server{
 		cfg:         cfg,
 		pg:          pg,
 		rdb:         rdb,
 		emailClient: emailClient,
+		storage:     storage,
 	}
 }
 

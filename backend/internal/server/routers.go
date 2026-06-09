@@ -13,6 +13,7 @@ import (
 	"github.com/sd0hni-psina/sport/internal/features/news"
 	"github.com/sd0hni-psina/sport/internal/features/sections"
 	"github.com/sd0hni-psina/sport/internal/features/suggestions"
+	"github.com/sd0hni-psina/sport/internal/features/upload"
 	"github.com/sd0hni-psina/sport/internal/features/users"
 	"github.com/sd0hni-psina/sport/internal/middleware"
 	"github.com/sd0hni-psina/sport/internal/platform/cache"
@@ -60,6 +61,8 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 
 	suggestionsRepo := suggestions.NewRepository(s.pg)
 	suggestionsHandler := suggestions.NewHandler(suggestionsRepo)
+
+	uploadHandler := upload.NewHandler(s.storage)
 
 	v1 := r.Group("/api/v1")
 	{
@@ -166,6 +169,8 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 			admin.GET("/applications/:id/awards", awardsHandler.ListByApplication)
 
 			admin.GET("/suggestions", suggestionsHandler.AdminList)
+
+			admin.POST("/upload", uploadHandler.Upload)
 
 		}
 	}

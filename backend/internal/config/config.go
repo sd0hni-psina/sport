@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	App      AppConfig
-	Postgres PostgresConfig
-	Redis    RedisConfig
-	JWT      JWTConfig
-	Resend   ResendConfig
+	App        AppConfig
+	Postgres   PostgresConfig
+	Redis      RedisConfig
+	JWT        JWTConfig
+	Resend     ResendConfig
+	Cloudinary CloudinaryConfig
 }
 
 type AppConfig struct {
@@ -48,6 +49,12 @@ type JWTConfig struct {
 type ResendConfig struct {
 	APIKey string
 	From   string
+}
+
+type CloudinaryConfig struct {
+	CloudName string
+	APIKey    string
+	APISecret string
 }
 
 func getEnv(key, fallback string) string {
@@ -119,6 +126,11 @@ func Load() *Config {
 		Resend: ResendConfig{
 			APIKey: mustGetEnv("RESEND_API_KEY"),
 			From:   getEnv("RESEND_FROM", "onboarding@resend.dev"),
+		},
+		Cloudinary: CloudinaryConfig{
+			CloudName: mustGetEnv("CLOUDINARY_CLOUD_NAME"),
+			APIKey:    mustGetEnv("CLOUDINARY_API_KEY"),
+			APISecret: mustGetEnv("CLOUDINARY_API_SECRET"),
 		},
 	}
 }

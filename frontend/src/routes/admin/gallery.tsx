@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/shared/Skeleton'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { ImageUpload } from '@/components/shared/ImageUpload'
 
 export const Route = createFileRoute('/admin/gallery')({
   component: AdminGalleryPage,
@@ -81,18 +82,13 @@ function AdminGalleryPage() {
       {/* Форма добавления */}
       {showForm && (
         <div className="bg-white rounded-2xl p-6 mb-6" style={{ border: '1px solid #E2E8F0' }}>
-          <h2 className="font-bold mb-5" style={{ color: '#0D1F3C' }}>Новый материал</h2>
+          <h2 className="font-bold mb-5" style={{ color: '#0D1F3C' }}>Новый material</h2>
           <div className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: '#64748B' }}>
-                URL фото или видео *
-              </label>
-              <input
+              <ImageUpload
                 value={form.url}
-                onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
-                placeholder="https://example.com/photo.jpg"
-                className={inputClass}
-                style={inputStyle}
+                onChange={url => setForm(p => ({ ...p, url }))}
+                label="Фото или видео *"
               />
             </div>
 

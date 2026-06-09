@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { getApiError } from '@/lib/handle-api-error'
+import { ImageUpload } from '@/components/shared/ImageUpload'
 
 
 export const Route = createFileRoute('/admin/news/new')({
@@ -136,14 +137,11 @@ function AdminNewsNewPage() {
               </div>
               <div>
                 <label className={labelClass} style={labelStyle}>Ссылка на обложку (URL)</label>
-                <input
-                  name="cover_image"
-                  value={form.cover_image}
-                  onChange={handleChange}
-                  placeholder="https://example.com/image.jpg"
-                  className={inputClass}
-                  style={inputStyle}
-                />
+                <ImageUpload
+  value={form.cover_image}
+  onChange={url => setForm(prev => ({ ...prev, cover_image: url }))}
+  label="Обложка"
+/>
               </div>
             </div>
           </div>

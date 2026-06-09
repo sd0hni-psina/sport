@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getApiError } from "@/lib/handle-api-error";
+import { ImageUpload } from '@/components/shared/ImageUpload';
 
 export const Route = createFileRoute("/admin/events/new")({
   component: AdminEventNewPage,
@@ -37,6 +38,7 @@ function AdminEventNewPage() {
     name: "",
     sport_type: "",
     description: "",
+    cover_image: "",
     location: "",
     location_lat: "",
     location_lng: "",
@@ -75,16 +77,14 @@ function AdminEventNewPage() {
         cancel_deadline_hrs: Number(form.cancel_deadline_hrs) || 24,
       };
 
-      if (form.location_lat)
-        payload.location_lat = parseFloat(form.location_lat);
-      if (form.location_lng)
-        payload.location_lng = parseFloat(form.location_lng);
+      if (form.cover_image) payload.cover_image = form.cover_image;
+      if (form.location_lat) payload.location_lat = parseFloat(form.location_lat);
+      if (form.location_lng) payload.location_lng = parseFloat(form.location_lng);
       if (form.instructor_name) payload.instructor_name = form.instructor_name;
       if (form.instructor_bio) payload.instructor_bio = form.instructor_bio;
       if (form.min_age) payload.min_age = Number(form.min_age);
       if (form.max_age) payload.max_age = Number(form.max_age);
-      if (form.max_participants)
-        payload.max_participants = Number(form.max_participants);
+      if (form.max_participants) payload.max_participants = Number(form.max_participants);
       if (form.prizes) payload.prizes = form.prizes;
 
       await apiClient.post("/admin/events", payload);
@@ -179,6 +179,12 @@ function AdminEventNewPage() {
                 style={inputStyle}
               />
             </div>
+
+            <ImageUpload
+              value={form.cover_image ?? ''}
+              onChange={url => setForm(prev => ({ ...prev, cover_image: url }))}
+              label="Обложка мероприятия (необязательно)"
+            />
           </div>
         </div>
 
