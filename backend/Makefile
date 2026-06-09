@@ -66,6 +66,12 @@ migrate-action:
 		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@sport-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
 		"$(action)"
 
+migrate-force:
+	docker compose run --rm sport-migrate \
+		-path /migrations \
+		-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@sport-postgres:5432/${POSTGRES_DB}?sslmode=disable" \
+		force $(version)
+
 # ──────────────────────────────────────────
 # Приложение
 # ──────────────────────────────────────────

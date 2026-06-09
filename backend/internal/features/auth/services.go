@@ -21,6 +21,8 @@ const (
 	smsCodePrefix = "sms:code:"
 
 	emailCodePrefix = "email:code:"
+
+	refreshBlacklistPrefix = "blacklist:refresh:"
 )
 
 type Service struct {
@@ -127,8 +129,13 @@ func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*TokenResponse
 	return s.generateTokens(user)
 }
 
-// Refresh — обновляет access токен по refresh токену
 func (s *Service) Refresh(ctx context.Context, req RefreshRequest) (*TokenResponse, error) {
+	key := refreshBlacklistPrefix + req.RefreshToken[:16]
+	exists, _ := s.rdb.Exists(ctx, key).Result()
+	if exists > 0 {
+		return nil, fmt.Errorf("%w: token revoked", domain.ErrUnauthorized)
+	}
+
 	claims, err := s.parseToken(req.RefreshToken, s.cfg.RefreshSecret)
 	if err != nil {
 		return nil, fmt.Errorf("%w: invalid refresh token", domain.ErrUnauthorized)
@@ -137,7 +144,6 @@ func (s *Service) Refresh(ctx context.Context, req RefreshRequest) (*TokenRespon
 	var userID int64
 	fmt.Sscanf(claims.Subject, "%d", &userID)
 
-	// верифицируем что пользователь существует и не заблокирован
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
@@ -146,7 +152,6 @@ func (s *Service) Refresh(ctx context.Context, req RefreshRequest) (*TokenRespon
 		return nil, domain.ErrUserBlocked
 	}
 
-	// генерируем оба токена
 	return s.generateTokens(user)
 }
 
@@ -319,5 +324,24 @@ func (s *Service) sendEmailCode(ctx context.Context, emailAddr string) error {
 	}
 
 	slog.Info("email code sent", "email", emailAddr)
+	return nil
+}
+
+func (s *Service) Logout(ctx context.Context, refreshToken string) error {
+	if refreshToken == "" {
+		return nil
+	}
+
+	claims, err := s.parseToken(refreshToken, s.cfg.RefreshSecret)
+	if err != nil {
+		return nil
+	}
+
+	ttl := time.Until(claims.ExpiresAt.Time)
+	if ttl > 0 {
+		key := refreshBlacklistPrefix + refreshToken[:16] // первые 16 символов как ключ
+		s.rdb.Set(ctx, key, "1", ttl)
+	}
+
 	return nil
 }

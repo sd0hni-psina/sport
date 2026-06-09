@@ -19,6 +19,7 @@ type Config struct {
 type AppConfig struct {
 	Env  string
 	Port string
+	URL  string
 }
 
 type PostgresConfig struct {
@@ -93,6 +94,7 @@ func Load() *Config {
 		App: AppConfig{
 			Env:  getEnv("APP_ENV", "dev"),
 			Port: getEnv("APP_PORT", "8080"),
+			URL:  getEnv("APP_URL", "http://localhost:5173"),
 		},
 		Postgres: PostgresConfig{
 			User:     mustGetEnv("POSTGRES_USER"),

@@ -79,7 +79,10 @@ func (h *Handler) Refresh(c *gin.Context) {
 }
 
 func (h *Handler) Logout(c *gin.Context) {
-	// TODO: добавить refresh токен в blacklist в Redis
+	var req LogoutRequest
+	c.ShouldBindJSON(&req)
+
+	h.service.Logout(c.Request.Context(), req.RefreshToken)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
 

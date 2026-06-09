@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/sd0hni-psina/sport/internal/domain"
+	"github.com/sd0hni-psina/sport/internal/platform/cache"
 )
 
 type Service struct {
-	repo *Repository
+	repo  *Repository
+	cache *cache.Cache
 }
 
 type ListResult struct {
@@ -20,8 +22,10 @@ type ListResult struct {
 	TotalPages int
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+const eventsCacheTTL = 2 * time.Minute
+
+func NewService(repo *Repository, cache *cache.Cache) *Service {
+	return &Service{repo: repo, cache: cache}
 }
 
 func (s *Service) List(ctx context.Context, f ListEventsFilter) ([]*domain.Event, error) {
@@ -74,6 +78,8 @@ func (s *Service) Create(ctx context.Context, req CreateEventRequest) (*domain.E
 		return nil, err
 	}
 	e.ID = id
+
+	s.cache.Del(ctx, "events:list:*") // сбрасываем кэш
 	return e, nil
 }
 
@@ -140,6 +146,7 @@ func (s *Service) Update(ctx context.Context, id int64, req UpdateEventRequest) 
 	if err := s.repo.Update(ctx, e); err != nil {
 		return nil, err
 	}
+	s.cache.Del(ctx, "events:list:*")
 	return e, nil
 }
 
@@ -157,7 +164,13 @@ func (s *Service) UpdateStatus(ctx context.Context, id int64, req UpdateStatusRe
 	if _, err := s.repo.GetByID(ctx, id); err != nil {
 		return err
 	}
-	return s.repo.UpdateStatus(ctx, id, req.Status)
+	if err := s.repo.UpdateStatus(ctx, id, req.Status); err != nil {
+		return err
+	}
+
+	s.cache.Del(ctx, "events:list:*")
+
+	return nil
 }
 
 func (s *Service) Delete(ctx context.Context, id int64) error {
@@ -173,7 +186,11 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("%w: event has %d active applications, cancel them first", domain.ErrForbidden, count)
 	}
 
-	return s.repo.Delete(ctx, id)
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.cache.Del(ctx, "events:list:*")
+	return nil
 }
 
 func (s *Service) ListAll(ctx context.Context) ([]*domain.Event, error) {
@@ -186,6 +203,15 @@ func (s *Service) ListWithPagination(ctx context.Context, f ListEventsFilter) (*
 	}
 	if f.PageSize < 1 || f.PageSize > 100 {
 		f.PageSize = 12
+	}
+
+	// кэшируем только первую страницу без фильтров
+	cacheKey := fmt.Sprintf("events:list:p%d:s%d:sport%s:date%s",
+		f.Page, f.PageSize, f.SportType, f.Date)
+
+	var result ListResult
+	if err := s.cache.Get(ctx, cacheKey, &result); err == nil {
+		return &result, nil
 	}
 
 	events, err := s.repo.List(ctx, f)
@@ -203,11 +229,18 @@ func (s *Service) ListWithPagination(ctx context.Context, f ListEventsFilter) (*
 		totalPages++
 	}
 
-	return &ListResult{
+	result = ListResult{
 		Events:     events,
 		Total:      total,
 		Page:       f.Page,
 		PageSize:   f.PageSize,
 		TotalPages: totalPages,
-	}, nil
+	}
+
+	s.cache.Set(ctx, cacheKey, result, eventsCacheTTL)
+	return &result, nil
+}
+
+func (s *Service) ListAllPaginated(ctx context.Context, page, pageSize int, search string) ([]*domain.Event, int, error) {
+	return s.repo.ListAllPaginated(ctx, page, pageSize, search)
 }

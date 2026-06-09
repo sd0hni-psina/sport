@@ -134,6 +134,66 @@ func (r *Repository) List(ctx context.Context, f ListEventsFilter) ([]*domain.Ev
 	return result, nil
 }
 
+func (r *Repository) ListAllPaginated(ctx context.Context, page, pageSize int, search string) ([]*domain.Event, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+
+	countQuery := `SELECT COUNT(*) FROM events`
+	query := `
+		SELECT id, name, sport_type, description, location, location_lat, location_lng,
+		       time_start, time_end, instructor_name, instructor_bio,
+		       min_age, max_age, max_participants, prizes, cancel_deadline_hrs,
+		       status, created_at, updated_at
+		FROM events`
+
+	args := []any{}
+	argN := 1
+
+	if search != "" {
+		where := fmt.Sprintf(" WHERE name ILIKE $%d OR sport_type ILIKE $%d OR location ILIKE $%d",
+			argN, argN, argN)
+		countQuery += where
+		query += where
+		args = append(args, "%"+search+"%")
+		argN++
+	}
+
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argN, argN+1)
+	args = append(args, pageSize, offset)
+
+	var total int
+	countArgs := args[:len(args)-2]
+	if err := r.db.QueryRow(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("events.repo: count all: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("events.repo: list all paginated: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*domain.Event
+	for rows.Next() {
+		e := &domain.Event{}
+		if err := rows.Scan(
+			&e.ID, &e.Name, &e.SportType, &e.Description, &e.Location, &e.LocationLat, &e.LocationLng,
+			&e.TimeStart, &e.TimeEnd, &e.InstructorName, &e.InstructorBio,
+			&e.MinAge, &e.MaxAge, &e.MaxParticipants, &e.Prizes, &e.CancelDeadlineHrs,
+			&e.Status, &e.CreatedAt, &e.UpdatedAt,
+		); err != nil {
+			return nil, 0, fmt.Errorf("events.repo: scan: %w", err)
+		}
+		result = append(result, e)
+	}
+	return result, total, nil
+}
+
 func (r *Repository) Update(ctx context.Context, e *domain.Event) error {
 	query := `
 		UPDATE events SET

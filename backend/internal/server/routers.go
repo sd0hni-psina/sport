@@ -15,6 +15,7 @@ import (
 	"github.com/sd0hni-psina/sport/internal/features/suggestions"
 	"github.com/sd0hni-psina/sport/internal/features/users"
 	"github.com/sd0hni-psina/sport/internal/middleware"
+	"github.com/sd0hni-psina/sport/internal/platform/cache"
 )
 
 func (s *Server) registerRoutes(r *gin.Engine) {
@@ -25,7 +26,8 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 	authHandler := auth.NewHandler(authService)
 
 	eventsRepo := events.NewRepository(s.pg)
-	eventsService := events.NewService(eventsRepo)
+	eventsCache := cache.New(s.rdb)
+	eventsService := events.NewService(eventsRepo, eventsCache)
 	eventsHandler := events.NewHandler(eventsService)
 
 	applicationsRepo := applications.NewRepository(s.pg)
@@ -128,7 +130,7 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 
 		// требует JWT + admin
 		admin := v1.Group("/admin")
-		admin.Use(middleware.Auth(s.cfg.JWT), middleware.RequireAdmin())
+		admin.Use(middleware.Auth(s.cfg.JWT), middleware.RequireAdmin(), middleware.AdminAuditLog())
 		{
 			admin.POST("/events", eventsHandler.Create)
 			admin.PUT("/events/:id", eventsHandler.Update)
@@ -170,5 +172,28 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 }
 
 func (s *Server) healthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	ctx := c.Request.Context()
+
+	pgStatus := "ok"
+	if err := s.pg.Ping(ctx); err != nil {
+		pgStatus = "error"
+	}
+
+	redisStatus := "ok"
+	if err := s.rdb.Ping(ctx).Err(); err != nil {
+		redisStatus = "error"
+	}
+
+	status := "ok"
+	httpStatus := http.StatusOK
+	if pgStatus != "ok" || redisStatus != "ok" {
+		status = "degraded"
+		httpStatus = http.StatusServiceUnavailable
+	}
+
+	c.JSON(httpStatus, gin.H{
+		"status":   status,
+		"postgres": pgStatus,
+		"redis":    redisStatus,
+	})
 }

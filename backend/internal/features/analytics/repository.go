@@ -175,7 +175,7 @@ func (r *Repository) GetDailyActivity(ctx context.Context, days int) ([]map[stri
 			DATE(created_at) as date,
 			COUNT(*) as applications
 		FROM applications
-		WHERE created_at >= NOW() - ($1 || ' days')::INTERVAL
+		WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
 		GROUP BY DATE(created_at)
 		ORDER BY date ASC`,
 		days,

@@ -21,13 +21,14 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 
 func (r *Repository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, middle_name, phone_number,
+		SELECT id, first_name, last_name, middle_name, phone_number, email,
 		       city, address, birth_date, role, reputation, is_blocked, created_at, updated_at
 		FROM users WHERE id = $1`
 
 	u := &domain.User{}
+	var phoneVal *string
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber,
+		&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &phoneVal, &u.Email,
 		&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 		&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 	)
@@ -36,6 +37,9 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*domain.User, error
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("users.repo: get by id: %w", err)
+	}
+	if phoneVal != nil {
+		u.PhoneNumber = *phoneVal
 	}
 	return u, nil
 }
@@ -144,7 +148,7 @@ func (r *Repository) DeleteChild(ctx context.Context, id int64, parentID int64) 
 
 func (r *Repository) ListAll(ctx context.Context) ([]*domain.User, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, first_name, last_name, middle_name, phone_number,
+		SELECT id, first_name, last_name, middle_name, phone_number, email,
 		       city, address, birth_date, role, reputation, is_blocked, created_at, updated_at
 		FROM users ORDER BY created_at DESC`)
 	if err != nil {
@@ -155,12 +159,16 @@ func (r *Repository) ListAll(ctx context.Context) ([]*domain.User, error) {
 	var result []*domain.User
 	for rows.Next() {
 		u := &domain.User{}
+		var phoneVal *string
 		if err := rows.Scan(
-			&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &u.PhoneNumber,
+			&u.ID, &u.FirstName, &u.LastName, &u.MiddleName, &phoneVal, &u.Email,
 			&u.City, &u.Address, &u.BirthDate, &u.Role, &u.Reputation,
 			&u.IsBlocked, &u.CreatedAt, &u.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("users.repo: scan: %w", err)
+		}
+		if phoneVal != nil {
+			u.PhoneNumber = *phoneVal
 		}
 		result = append(result, u)
 	}
